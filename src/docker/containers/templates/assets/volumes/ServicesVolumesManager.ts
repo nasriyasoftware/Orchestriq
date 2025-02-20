@@ -1,11 +1,11 @@
-import { StackVolumOptions } from "../../../../../docs/docs";
 import ContainerTemplate from "../../ContainerTemplate";
+import { StackVolumOptions } from "./docs";
 import StackVolume from "./StackVolume";
 
 class ServicesVolumesManager {
     #_container: ContainerTemplate;
     #_volumes: Record<string, StackVolume> = {};
-    
+
     constructor(container: ContainerTemplate) {
         this.#_container = container;
     }

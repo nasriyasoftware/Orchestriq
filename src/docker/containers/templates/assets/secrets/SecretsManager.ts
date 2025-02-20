@@ -1,4 +1,4 @@
-import { StackSecretOptions } from "../../../../../docs/docs";
+import { StackSecretOptions } from "../../docs";
 import ContainerTemplate from "../../ContainerTemplate";
 import StackSecret from "../../assets/secrets/StackSecret";
 

@@ -1,11 +1,11 @@
 import { StackSecretOptions } from "../../../../../docs/docs";
-import Container from "../../../_Container";
+import ContainerTemplate from "../../ContainerTemplate";
 
 class StackSecret {
-    #_container: Container;
+    #_container: ContainerTemplate;
     #_data: StackSecretOptions = { name: '', file: '' };
 
-    constructor(options: StackSecretOptions, container: Container) {
+    constructor(options: StackSecretOptions, container: ContainerTemplate) {
         this.#_container = container;
 
         if (!(typeof options === 'object' && Object.keys(options).length > 0)) {

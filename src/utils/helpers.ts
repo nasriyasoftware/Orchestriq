@@ -1,4 +1,4 @@
-import { RemoteAuth } from "../docs/docs";
+import { RegistryAuth } from "../registries/docs";
 import ProgressLogger from "./cli_logger";
 
 class Helpers {
@@ -90,54 +90,35 @@ class Helpers {
         }
     }
 
+    addRegistryAuthHeader(reqOptions: Record<string, any>, auth: RegistryAuth, serveraddress: string = 'https://index.docker.io/v1') {
+        const authConfig: RegistryAuth = { username: auth.username, password: auth.password };
+
+        if ('username' in auth) {
+            if (typeof auth.username !== 'string' || auth.username.length === 0) { throw new TypeError(`The "username" option (when provided) must be a non-empty string.`); }
+        } else {
+            throw new TypeError(`The registry "authorization" option (when provided) must contain a "username" property.`);
+        }
+
+        if ('password' in auth) {
+            if (typeof auth.password !== 'string' || auth.password.length === 0) { throw new TypeError(`The "password" option (when provided) must be a non-empty string.`); }
+        } else {
+            throw new TypeError(`The registry "authorization" option (when provided) must contain a "password" property.`);
+        }
+
+        if ('email' in auth) {
+            if (typeof auth.email !== 'string' || auth.email.length === 0) { throw new TypeError(`The registry "email" option (when provided) must be a non-empty string.`); }
+            if (!this.isValidEmail(auth.email)) { throw new TypeError(`The registry "email" you provided (${auth.email}) must be a valid email address.`); }
+            authConfig.email = auth.email;
+        }
+
+        if (!reqOptions.headers) { reqOptions.headers = {}; }
+        reqOptions.headers['X-Registry-Auth'] = Buffer.from(JSON.stringify({ ...authConfig, serveraddress })).toString('base64');
+    }
+
     isValidObject(obj: any): boolean { return this.isObject(obj) && this.notEmptyObject(obj); }
     isObject(obj: any): boolean { return typeof obj === 'object' && obj !== null; }
     notEmptyObject(obj: any): boolean { return this.isObject(obj) && Object.keys(obj).length > 0; }
-
-    /**
-     * Builds the authorization header for a request based on the given options.
-     * @param reqOptions - The request options object to modify.
-     * @param auth - The authorization options. If undefined, the header is not set.
-     * The authorization options must contain a type property which must be one of:
-     * - Basic
-     * - Bearer
-     * If the type is Basic, the options must contain username and password properties.
-     * If the type is Bearer, the options must contain a token property.
-     * The authorization options are validated and an error is thrown if they are invalid.
-     * @throws TypeError - If the authorization options are invalid.
-     * @throws Error - If the authorization type is unknown.
-     */
-    buildAuthHeader(reqOptions: Record<string, any>, auth: RemoteAuth | undefined) {
-        const authTypes = ['Basic', 'Bearer'];
-        if (!auth || !this.notEmptyObject(auth)) { throw new Error('The authorization (when provided) must be an object.'); }
-        if (!('type' in auth)) { throw new Error('The authorization (when provided) must have a type.'); }
-        if (!authTypes.includes(auth.type)) { throw new Error(`The authorization (when provided) must have one of the following types: ${authTypes.join(', ')}.`); }
-
-        if (auth.type === 'Basic') {
-            if ('username' in auth) {
-                if (typeof auth.username !== 'string' || auth.username.length === 0) { throw new TypeError(`The "username" option (when provided) must be a non-empty string.`); }
-            } else {
-                throw new TypeError(`The "authorization" option (when provided) must contain a "username" property.`);
-            }
-
-            if ('password' in auth) {
-                if (typeof auth.password !== 'string' || auth.password.length === 0) { throw new TypeError(`The "password" option (when provided) must be a non-empty string.`); }
-            } else {
-                throw new TypeError(`The Basic "authorization" option (when provided) must contain a "password" property.`);
-            }
-
-            reqOptions.headers['Authorization'] = `Basic ${Buffer.from(`${auth.username}:${auth.password}`).toString('base64')}`;
-        }
-
-        if (auth.type === 'Bearer') {
-            if ('token' in auth) {
-                if (typeof auth.token !== 'string' || auth.token.length === 0) { throw new TypeError(`The "token" option (when provided) must be a non-empty string.`); }
-                reqOptions.headers['Authorization'] = `Bearer ${auth.token}`;
-            } else {
-                throw new TypeError(`The Bearer "authorization" option (when provided) must contain a "token" property.`);
-            }
-        }
-    }
+    isValidEmail(email: string): boolean { return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email); }
 }
 
 const helpers = new Helpers();

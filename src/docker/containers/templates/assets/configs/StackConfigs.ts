@@ -1,4 +1,4 @@
-import { StackConfigsData } from "../../../../../docs/docs";
+import { StackConfigsData } from "../../docs";
 import fs from "fs";
 
 class StackConfigs {

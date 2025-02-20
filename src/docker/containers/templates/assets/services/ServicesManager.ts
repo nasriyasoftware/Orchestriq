@@ -1,5 +1,5 @@
-import { ServiceCreationOptions } from "../../../../../docs/docs";
 import ContainerTemplate from "../../ContainerTemplate";
+import { ServiceCreationOptions } from "./assets/docs";
 import Service from "./assets/Service";
 
 class ServicesManager {

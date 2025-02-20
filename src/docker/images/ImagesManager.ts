@@ -1,9 +1,11 @@
+import fs from 'fs';
 import path from "path";
-import { DockerImage, BuildImageOptions, ImageHistoryEntry, ImageRemoveOptions, ImageTagOptions, RegisteryOptions, BuildImageEndpointParams } from "../../docs/docs";
-import helpers from "../../utils/helpers";
 import tarball from "../../utils/Tarball";
+import helpers from "../../utils/helpers";
 import DockerSocket from "../socket/DockerSocket";
-import fs, { read } from 'fs';
+import registeries from "../../registries/Registries";
+import { RegistryOptions } from "../../registries/docs";
+import { DockerImage, ImageHistoryEntry, ImageTagOptions, ImageRemoveOptions, BuildImageOptions, BuildImageEndpointParams } from "./docs";
 
 class ImagesManager {
     #_socket: DockerSocket;
@@ -34,14 +36,14 @@ class ImagesManager {
      * @param {string} fromImage - The name of the image to pull, in the format 'name[:tag]'.
      * @param {PullImageOptions} [options] - Optional parameters for pulling the image.
      * @param {string} [options.tag] - The tag of the image to pull.
-     * @param {BasicAuthorization | BearerAuthorization} [options.authorization] - Optional authorization credentials for accessing private images.
-     * @param {string} [options.registeryURL] - Optional custom registry URL to pull the image from.
+     * @param {BasicAuth | BearerAuth} [options.authorization] - Optional authorization credentials for accessing private images.
+     * @param {string} [options.registryURL] - Optional custom registry URL to pull the image from.
      * @param {boolean} [options.verbose] - If true, logs detailed progress of the image pull process.
      * @returns {Promise<void>} A promise that resolves when the image is successfully pulled.
      * @throws {TypeError} Throws an error if the `fromImage` is not a non-empty string, or if any option is invalid.
      * @throws {Error} Throws an error if unable to pull the image, or if required authorization is missing for private images.
      */
-    async pull(fromImage: string, options?: RegisteryOptions): Promise<void> {
+    async pull(fromImage: string, options?: RegistryOptions): Promise<void> {
         try {
             if (typeof fromImage !== 'string' || fromImage.length === 0) { throw new TypeError('fromImage must be a non-empty string.'); }
             let [image, tag] = fromImage.split(':');
@@ -66,21 +68,30 @@ class ImagesManager {
                     queryParams.set('tag', options.tag);
                 }
 
-                if ('registeryURL' in options) {
-                    if (isURL) { throw new Error('Image URL cannot be provided when using the "registeryURL" option.'); }
-                    if (typeof options.registeryURL !== 'string' || options.registeryURL.length === 0) { throw new TypeError('Image registery URL (when provided) must be a non-empty string.'); }
-                    if (!helpers.isURL(options.registeryURL)) { throw new TypeError('Image registery URL (when provided) must be a valid URL.'); }
-                    queryParams.set('fromImage', `${options.registeryURL}/${image}`);
-                }
+                if ('registry' in options) {
+                    if (typeof options.registry !== 'string' || options.registry.length === 0) { throw new TypeError('Image Registry (when provided) must be a non-empty string.'); }
+                    const registry = registeries.get(options.registry);
+                    if (!registry) { throw new Error(`Registry "${options.registry}" is not defined. Please define the registry before using it.`); }
 
-                if ('authorization' in options) {
-                    const auth = options.authorization;
-                    helpers.buildAuthHeader(reqOptions, auth);
+                    queryParams.set('fromImage', `${registry.serveraddress}/${image}`);
+                    if (registry.authentication) { reqOptions.headers['X-Registry-Auth'] = registry.xAuthHeader; }
                 } else {
-                    if (isPrivate) { throw new Error(`A private image has been used, but no authorization options have been provided. Use the "authorization" option to provide the credentials for the image.`); }
+                    if ('registryURL' in options) {
+                        if (isURL) { throw new Error('Image URL cannot be provided when using the "registryURL" option.'); }
+                        if (typeof options.registryURL !== 'string' || options.registryURL.length === 0) { throw new TypeError('Image Registry URL (when provided) must be a non-empty string.'); }
+                        if (!helpers.isURL(options.registryURL)) { throw new TypeError('Image Registry URL (when provided) must be a valid URL.'); }
+                        queryParams.set('fromImage', `${options.registryURL}/${image}`);
+                    }
+
+                    if ('authentication' in options && options.authentication) {
+                        const auth = options.authentication;
+                        helpers.addRegistryAuthHeader(reqOptions, auth);
+                    } else {
+                        if (isPrivate) { throw new Error(`A private image has been used, but no authentication options have been provided. Use the "authentication" option to provide the credentials for the image.`); }
+                    }
                 }
             } else {
-                if (isPrivate) { throw new Error(`A private image has been used, but no authorization options have been provided. Use the "authorization" option to provide the credentials for the image.`); }
+                if (isPrivate) { throw new Error(`A private image has been used, but no authentication options have been provided. Use the "authentication" option to provide the credentials for the image.`); }
             }
 
             const response = await this.#_socket.fetch(`/images/create?${queryParams.toString()}`, reqOptions);
@@ -133,61 +144,73 @@ class ImagesManager {
     }
 
     /**
-     * Pushes a Docker image to a repository.
+     * Pushes an image to a repository.
      * 
-     * @param {string} imageName - The name of the Docker image to push, in the format 'name[:tag]'.
-     * @param {RegisteryOptions} [options] - Optional parameters for pushing the image.
+     * **Notes:**
+     * - If the image is private, you must provide the necessary authorization credentials.
+     * - The pushed image will be publicly available unless the repository is private. You can make the repository private in the Docker Hub settings.
+     * 
+     * @param {string} imageName - The name of the Docker image to push, in the format `name[:tag]`.
+     * @param {RegistryOptions} [options] - Optional parameters for pushing the image.
      * @param {string} [options.tag] - The tag of the image to push.
-     * @param {BasicAuthorization | BearerAuthorization} [options.authorization] - Optional authorization credentials for accessing private images.
-     * @param {string} [options.registeryURL] - Optional custom registry URL to push the image to.
+     * @param {BasicAuth | BearerAuth} [options.authorization] - Optional authorization credentials for accessing private images.
+     * @param {string} [options.registryURL] - Optional custom registry URL to push the image to.
      * @param {boolean} [options.verbose] - If true, logs detailed progress of the image push process.
      * @returns {Promise<void>} A promise that resolves when the image is successfully pushed.
      * @throws {TypeError} Throws an error if the `imageName` is not a non-empty string, or if any option is invalid.
      * @throws {Error} Throws an error if unable to push the image, or if required authorization is missing for private images.
      */
-    async push(imageName: string, options?: RegisteryOptions): Promise<void> {
+    async push(imageName: string, options: RegistryOptions): Promise<void> {
+        const cache = Object.seal({ tag: undefined as unknown as string, serveraddress: undefined as unknown as string });
+        const reqOptions: Record<string, any> = {
+            method: 'POST',
+            headers: {},
+            returnJSON: false
+        };
+
         try {
             if (typeof imageName !== 'string' || imageName.length === 0) { throw new TypeError('Image name must be a non-empty string.'); }
-            let [image, tag] = imageName.split(':');
-            const isURL = helpers.isURL(image);
-            const isPrivate = image.split('').filter(i => i === '/').length === 1;
+            const [image, tag] = imageName.split(':');
 
             if (image.length === 0) { throw new Error('Image name is required.'); }
-            if (tag && tag.length === 0) { throw new Error('Image tag was denoted with a colon, but no tag was provided.'); }
-
-            const queryParams = new URLSearchParams();
-            const reqOptions: Record<string, any> = {
-                method: 'POST',
-                headers: {},
-                returnJSON: false
-            };
+            if (tag) {
+                if (tag.length === 0) { throw new Error('Image tag was denoted with a colon, but no tag was provided.'); }
+                cache.tag = tag;
+            }
 
             if (options) {
                 if ('tag' in options) {
                     if (typeof options.tag !== 'string' || options.tag.length === 0) { throw new TypeError('Image tag (when provided) must be a non-empty string.'); }
-                    queryParams.set('tag', options.tag);
+                    if (cache.tag) { throw new SyntaxError('Image tag was already provided in the image name. Use either the image name or the "tag" option, not both.'); }
+                    cache.tag = options.tag;
                 }
 
-                if ('registeryURL' in options) {
-                    if (isURL) { throw new Error('Image URL cannot be provided when using the "registeryURL" option.'); }
-                    if (typeof options.registeryURL !== 'string' || options.registeryURL.length === 0) { throw new TypeError('Image registery URL (when provided) must be a non-empty string.'); }
-                    if (!helpers.isURL(options.registeryURL)) { throw new TypeError('Image registery URL (when provided) must be a valid URL.'); }
-                    image = `${new URL(options.registeryURL).origin}/${image}`.split('://')[1];
-                }
-
-                if ('authorization' in options) {
-                    const auth = options.authorization;
-                    helpers.buildAuthHeader(reqOptions, auth);
+                if ('registry' in options) {
+                    if (typeof options.registry !== 'string' || options.registry.length === 0) { throw new TypeError('Image Registry (when provided) must be a non-empty string.'); }
+                    const registry = registeries.get(options.registry);
+                    if (!registry) { throw new Error(`Registry "${options.registry}" is not defined. Please define the registry before using it.`); }
+                    if (registry.authentication) { reqOptions.headers['X-Registry-Auth'] = registry.xAuthHeader; }
                 } else {
-                    if (isPrivate) { throw new Error(`A private image has been used, but no authorization options have been provided. Use the "authorization" option to provide the credentials for the image.`); }
+                    if ('registryURL' in options) {
+                        if (typeof options.registryURL !== 'string' || options.registryURL.length === 0) { throw new TypeError('Image Registry URL (when provided) must be a non-empty string.'); }
+                        if (!helpers.isURL(options.registryURL)) { throw new TypeError('Image Registry URL (when provided) must be a valid URL.'); }
+                        cache.serveraddress = options.registryURL;
+                    }
+
+                    if ('authentication' in options && options.authentication) {
+                        const auth = options.authentication;
+                        helpers.addRegistryAuthHeader(reqOptions, auth, cache.serveraddress);
+                    }
                 }
-            } else {
-                if (isPrivate) { throw new Error(`A private image has been used, but no authorization options have been provided. Use the "authorization" option to provide the credentials for the image.`); }
             }
 
-            const endpoint = `/images/${image}/push${queryParams.has('tag') ? '?' : ''}${queryParams.toString()}`.replace(/\/+$/, '');
+            const endpoint = `/images/${encodeURIComponent(image)}/push${cache.tag ? `?tag=${cache.tag}` : ''}`.replace(/\/+$/, '');
             const response = await this.#_socket.fetch(endpoint, reqOptions);
-            if (!response.ok) { throw new Error(`Unable to push image: ${response.statusText}`); }
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(`Unable to push image: ${err?.message || response.statusText}`);
+            }
 
             // Process the stream            
             await helpers.processStream(response, options?.verbose);
@@ -346,21 +369,32 @@ class ImagesManager {
 
             if ('tag' in options) {
                 if (typeof options.tag !== 'string' || options.tag.length === 0) { throw new TypeError('The image tag must be a non-empty string.'); }
+                if (options.tag.includes(':')) {
+                    const [name, tag] = options.tag.split(':');
+                    if (!(name && tag)) { throw new SyntaxError(`The image tag "${options.tag}" is invalid.`); }
+                    data.t = `${name}:${tag}`;
+                } else {
+                    data.t = `${options.name}:${options.tag}`;
+                }
             } else {
                 options.tag = 'latest';
+                data.t = `${options.name}:${options.tag}`;
             }
-
-            data.t = `${options.name}:${options.tag}`;
 
             if ('context' in options) {
                 if (typeof options.context !== 'string' || options.context.length === 0) { throw new TypeError('The build context must be a non-empty string.'); }
+                const isURL = helpers.isURL(options.context);
 
-                if (helpers.isURL(options.context)) {
+                if (isURL && (options.context.startsWith('http://') || options.context.startsWith('https://'))) {
                     data.remote = options.context;
 
-                    if ('authorization' in options) {
+                    if ('authorization' in options && options.authorization) {
                         const auth = options.authorization;
-                        helpers.buildAuthHeader(reqOptions, auth);
+                        if (auth.type === 'Basic') {
+                            reqOptions.headers['Authorization'] = Buffer.from(`${auth.username}:${auth.password}`).toString('base64');
+                        } else if (auth.type === 'Bearer') {
+                            reqOptions.headers['Authorization'] = `Bearer ${auth.token}`;
+                        }
                     }
                 } else {
                     if (!fs.existsSync(options.context)) { throw new Error(`The build context (${options.context}) must exist.`); }
@@ -456,10 +490,9 @@ class ImagesManager {
             // Preparing request
             const queryParams = new URLSearchParams(data as Record<string, string>);
             const endpoint = `/build?${queryParams.toString()}`;
-            if (configs.context.tar.path) { reqOptions.body = fs.createReadStream(configs.context.tar.path) }
+            if (configs.context.tar.path) { reqOptions.body = Buffer.from(fs.readFileSync(configs.context.tar.path)); }
 
             const response = await this.#_socket.fetch(endpoint, reqOptions);
-            console.log(response.headers)
             if (!response.ok) {
                 const err = await response.json();
                 throw new Error(err?.message || `${response.statusText}`);

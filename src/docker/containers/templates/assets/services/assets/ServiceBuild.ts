@@ -14,6 +14,7 @@ class ServiceBuild {
     #_extra_hosts: string[] = [];
     #_squash: boolean = false;
     #_network: string | undefined = undefined;
+    #_configured: boolean = false;
 
     constructor(container: ContainerTemplate) {
         this.#_container = container;
@@ -26,6 +27,8 @@ class ServiceBuild {
             for (const [key, value] of Object.entries(args)) {
                 this.#_args[key] = String(value);
             }
+
+            this.#_configured = true;
         },
         labels: (labels: Record<string, any>) => {
             if (!(typeof labels === 'object' && Object.keys(labels).length > 0)) { throw new TypeError('labels must be a non-empty object.') }
@@ -33,31 +36,24 @@ class ServiceBuild {
             for (const [key, value] of Object.entries(labels)) {
                 this.#_labels[key] = String(value);
             }
+
+            this.#_configured = true;
         }
     });
 
     /**
-     * Checks if the ServiceBuild instance is empty.
+     * Returns whether the build configuration has been set or not.
      *
-     * This method evaluates whether all properties of the ServiceBuild instance are either undefined,
-     * empty, or contain no entries. If all properties are in such a state, the method returns true,
-     * indicating that the ServiceBuild is empty. Otherwise, it returns false.
+     * This property is a boolean that indicates whether the build configuration
+     * has been set using one of the methods of the `add` object. The property
+     * is set to `true` if the build configuration has been set at least once.
      *
-     * @returns {boolean} True if the ServiceBuild instance has no defined or non-empty properties; otherwise, false.
+     * @readonly
+     * @type {boolean}
      */
-    isEmpty(): boolean {
-        return (
-            !this.context &&
-            !this.dockerfile &&
-            !this.target &&
-            !this.shm_size &&
-            !this.network &&
-            (!this.args || Object.keys(this.args).length === 0) &&
-            (!this.labels || Object.keys(this.labels).length === 0) &&
-            (!this.cache_from || this.cache_from.length === 0) &&
-            (!this.extra_hosts || Object.keys(this.extra_hosts).length === 0)
-        );
-    }
+    get configured(): boolean {
+        return this.#_configured;
+    }    
 
     /**
      * Get the network to use for the build. If not set, the default value is undefined.
@@ -85,6 +81,8 @@ class ServiceBuild {
             if (!(value in this.#_container.networks.list)) { throw new Error(`Network ${value} does not exist.`) }
             this.#_network = value;
         }
+
+        this.#_configured = true;
     }
 
     /**
@@ -103,6 +101,7 @@ class ServiceBuild {
     set context(value: string) {
         if (typeof value !== 'string') { throw new TypeError('context must be a string.') }
         this.#_context = value;
+        this.#_configured = true;
     }
 
     /**
@@ -122,6 +121,7 @@ class ServiceBuild {
     set dockerfile(value: string) {
         if (typeof value !== 'string') { throw new TypeError('dockerfile must be a string.') }
         this.#_dockerfile = value;
+        this.#_configured = true;
     }
 
 
@@ -149,6 +149,7 @@ class ServiceBuild {
     set target(value: string) {
         if (typeof value !== 'string') { throw new TypeError('target must be a string.') }
         this.#_target = value;
+        this.#_configured = true;
     }
 
     /**
@@ -171,6 +172,7 @@ class ServiceBuild {
         }
 
         this.#_cache_from = value;
+        this.#_configured = true;
     }
 
 
@@ -198,6 +200,7 @@ class ServiceBuild {
     set shm_size(value: string) {
         if (typeof value !== 'string') { throw new TypeError('shm_size must be a string.') }
         this.#_shm_size = value;
+        this.#_configured = true;
     }
 
     /**
@@ -220,7 +223,9 @@ class ServiceBuild {
                 throw new TypeError('extra_hosts must be a list of strings.');
             }
         }
+
         this.#_extra_hosts = value;
+        this.#_configured = true;
     }
 
     /**
@@ -239,6 +244,7 @@ class ServiceBuild {
     set squash(value: boolean) {
         if (typeof value !== 'boolean') { throw new TypeError('squash must be a boolean.') }
         this.#_squash = value;
+        this.#_configured = true;
     }
 }
 

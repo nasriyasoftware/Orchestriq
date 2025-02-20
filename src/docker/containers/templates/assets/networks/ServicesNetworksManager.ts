@@ -1,4 +1,4 @@
-import { StackNetworkData } from "../../../../../docs/docs";
+import { StackNetworkData } from "./docs";
 import StackNetwork from "./StackNetwork";
 import ContainerTemplate from "../../ContainerTemplate";
 

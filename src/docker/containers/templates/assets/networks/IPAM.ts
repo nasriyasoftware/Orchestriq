@@ -1,4 +1,4 @@
-import { IPAMConfig, IPAMOptions, NetworkDriver } from "../../../../../docs/docs";
+import { IPAMConfig, IPAMOptions, NetworkDriver } from "./docs";
 
 class IPAM {
     #_data: IPAMOptions = {}

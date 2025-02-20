@@ -5,6 +5,7 @@ import ContainersManager from "./containers/ContainersManager";
 import NetworksManager from "./networks/NetworksManager";
 import VolumesManager from "./volumes/VolumesManager";
 import ImagesManager from "./images/ImagesManager";
+import DockerfileTemplate from "./containers/templates/assets/builders/Dockerfile/DockerfileTemplate";
 
 class Docker {
     #_socket = new DockerSocket();
@@ -40,6 +41,20 @@ class Docker {
      * @returns {ImagesManager} An instance of the ImagesManager class, providing APIs to manage images within the Docker daemon.
      */
     get images(): ImagesManager { return this.#_images }
+
+    /**
+     * Retrieves the templates available for generating.
+     * @returns {Object} An object containing the available templates.
+     */
+    readonly templates = Object.freeze({
+        /**
+         * Retrieves a Dockerfile template builder, allowing you to generate a Dockerfile used to build a Docker image.
+         * @returns {DockerfileTemplate} A Dockerfile template builder that can be used to generate a Dockerfile.
+         */
+        dockerfile: (): DockerfileTemplate => {
+            return new DockerfileTemplate()
+        }
+    })
 }
 
 export default Docker;

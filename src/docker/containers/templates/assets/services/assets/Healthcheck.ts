@@ -1,4 +1,4 @@
-import { HealthcheckData } from "../../../../../../docs/docs";
+import { HealthcheckData } from "./docs";
 
 /**
  * Represents a health check configuration for a service.

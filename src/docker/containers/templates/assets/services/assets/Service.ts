@@ -1,10 +1,11 @@
-import { Port, ServiceVolume, DockerLoggingDriver, ExternalLinkRecord, RestartOption, FailureRestartOption, RestartPolicy, DockerDriverType, ServiceCreationOptions, ServiceConfigsData } from '../../../../../../docs/docs';
+import { Port, ServiceVolume, FailureRestartOption, RestartOption, DockerLoggingDriver, ExternalLinkRecord, ServiceConfigsData, ServiceCreationOptions, RestartPolicy, DockerDriverType } from './docs';
 import ContainerTemplate from '../../../ContainerTemplate';
 import ServiceBuild from './ServiceBuild';
 import Environment from '../../Environment';
 import Healthcheck from './Healthcheck';
 import ServiceDeployment from './ServiceDeployment';
 import fs from 'fs';
+import path from 'path';
 
 class Service {
     #_container: ContainerTemplate;
@@ -28,7 +29,7 @@ class Service {
 
     #_networks: string[] = [];
     #_user = 'node';
-    #_restart: FailureRestartOption | RestartOption = { policy: 'unless-stopped' };
+    #_restart: FailureRestartOption | RestartOption | RestartPolicy = 'unless-stopped';
 
     #_logging: DockerLoggingDriver = {
         driver: 'json-file',
@@ -89,6 +90,7 @@ class Service {
         if (options.ports) { this.add.ports(options.ports); }
         if (options.volumes) { this.add.volumes(options.volumes); }
         if (options.description) { this.description = options.description; }
+        if (options.context) { this.build.context = options.context; }
         if (options.build) {
             if (options.build.context) { this.build.context = options.build.context; }
             if (options.build.dockerfile) { this.build.dockerfile = options.build.dockerfile; }
@@ -103,6 +105,7 @@ class Service {
         }
 
         if (options.environment) { this.environment.add(options.environment); }
+        if (options.env_files) { this.env_files = options.env_files; }
         if (options.entrypoint) { this.entrypoint = options.entrypoint; }
         if (options.command) { this.command = options.command; }
         if (options.dependsOn) { this.add.dependsOn(options.dependsOn); }
@@ -135,12 +138,37 @@ class Service {
     set env_files(value: string | string[]) {
         if (!Array.isArray(value)) { value = [value] }
 
-        for (const file of value) {
+        const finalFiles: string[] = [];
+        for (let file of value) {
             if (typeof file !== 'string') { throw new TypeError('env_file must be a string.'); }
-            if (!fs.existsSync(file)) { throw new Error(`env_file '${file}' does not exist.`); }
+            if (fs.existsSync(file)) {
+                const stat = fs.statSync(file);
+
+                if (stat.isFile()) {
+                    finalFiles.push(file);
+                    continue;
+                }
+
+                if (stat.isDirectory()) {
+                    const files = fs.readdirSync(file, { withFileTypes: true }).filter(f => f.isFile());
+                    const envFiles = files.filter(f => f.name.endsWith('.env'));
+                    finalFiles.push(...envFiles.map(f => path.join(file, f.name)));
+                    continue;
+                }
+            } else {
+                const context = this.#_build.context;
+                if (context) {
+                    const filePath = path.join(context, file);
+                    if (!fs.existsSync(filePath)) { throw new Error(`env_file '${filePath}' does not exist in the build context.`); }
+                    finalFiles.push(filePath);
+                    continue;
+                } else {
+                    throw new Error(`env_file '${file}' does not exist.`);
+                }
+            }
         }
 
-        this.#_env_files = value;
+        this.#_env_files = finalFiles;
     }
 
     /**
@@ -1150,9 +1178,7 @@ class Service {
      * Gets the build configuration for the service.
      * @returns {ServiceBuild} The build configuration for the service.
      */
-    get build(): ServiceBuild {
-        return this.#_build;
-    }
+    get build(): ServiceBuild { return this.#_build; }
 
     /**
      * Gets the list of exposed ports for the service.
@@ -1199,9 +1225,9 @@ class Service {
 
     /**
      * Gets the restart policy for the service.
-     * @returns {FailureRestartOption | RestartOption} An object with the restart policy and times.
+     * @returns {FailureRestartOption | RestartOption | RestartPolicy} An object with the restart policy and times.
      */
-    get restart(): FailureRestartOption | RestartOption { return this.#_restart; }
+    get restart(): FailureRestartOption | RestartOption | RestartPolicy { return this.#_restart; }
 
     /**
      * Gets the logging configuration for the service.

@@ -15,7 +15,7 @@ class ContainersManager {
      * @returns {ContainerTemplate} The newly created container template.
      */
     newTemplate(): ContainerTemplate {
-        const container = new ContainerTemplate();
+        const container = new ContainerTemplate(this.#_socket);
         this.#_containers.push(container);
         return container;
     }
@@ -35,15 +35,16 @@ class ContainersManager {
             throw error;
         }
     }
+    
 
     /**
-     * Deploys a container template to the Docker host.
+     * Create a container from a template to the Docker host.
      * 
      * @param {ContainerTemplate} container The container template to deploy.
      * @returns {Promise<string>} A promise that resolves to the ID of the created container.
      * @throws {Error} If the request fails to create the container.
      */
-    async deploy(container: ContainerTemplate): Promise<string> {
+    async create(container: ContainerTemplate): Promise<string> {
         try {
             if (!(container instanceof ContainerTemplate)) { throw new Error('Container must be an instance of ContainerTemplate.'); }
 

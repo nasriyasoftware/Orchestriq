@@ -4,14 +4,17 @@ import ServicesNetworksManager from "./assets/networks/ServicesNetworksManager";
 import SecretsManager from "./assets/secrets/SecretsManager";
 import ServicesManager from "./assets/services/ServicesManager";
 import ServicesVolumesManager from "./assets/volumes/ServicesVolumesManager";
-import ComposeBuilder from "./assets/compose/ComposeBuilder";
+import ComposeBuilder from "./assets/builders/ComposeBuilder";
 
 import fs from "fs";
 import path from "path";
 import { spawn } from 'child_process';
-import { DockerComposeUpOptions } from "../../../docs/docs";
+import { DockerComposeUpOptions } from "./docs";
+import DockerSocket from "../../socket/DockerSocket";
 
 class ContainerTemplate {
+    #_socket: DockerSocket;
+    #_id: String = '';
     #_name = '';
     #_volumes: ServicesVolumesManager;
     #_networks: ServicesNetworksManager;
@@ -24,23 +27,20 @@ class ContainerTemplate {
     #_compose = {
         generated: false, path: '',
         up: async (options: DockerComposeUpOptions) => {
-            // Used to label the container to get its ID later
-            const invocationId = Date.now();
 
             // Build the docker-compose command arguments
-            const args: string[] = ['up'];
+            const args: string[] = [];
 
-            if (!options.labels) { options.labels = {} }
-            options.labels.invocationId = String(invocationId);
-
-            for (const [key, value] of Object.entries(options.labels)) {
-                args.push(`--label`, `${key}=${value}`);
-            }
-
+            if (this.#_name) { args.push('--project-name', this.#_name) }
             if (options.detach) { args.push('-d') }
             if (options.build) { args.push('--build') }
-            if (options.forceRecreate) { args.push('--force-recreate') }
-            if (options.noRecreate) { args.push('--no-recreate') }
+
+            if (options.forceRecreate) {
+                args.push('--force-recreate')
+            } else if (options.noRecreate) {
+                args.push('--no-recreate');
+            }
+
             if (options.noBuild) { args.push('--no-build') }
             if (options.removeOrphans) { args.push('--remove-orphans') }
             if (options.abortOnContainerExit) { args.push('--abort-on-container-exit') }
@@ -49,6 +49,7 @@ class ContainerTemplate {
             if (options.verbose) { args.push('--verbose') }
             if (options.wait) { args.push('--wait') }
 
+
             // Handle the scale option
             if (options.scale) {
                 for (const [serviceName, value] of Object.entries(options.scale)) {
@@ -56,18 +57,14 @@ class ContainerTemplate {
                 }
             }
 
-            // Handle environment variables
-            if (options.env) {
-                for (const [envKey, envValue] of Object.entries(options.env)) {
-                    args.push('--env', `${envKey}=${envValue}`);
-                }
-            }
-
             // Handle the files option (compose files)
+            const fielsArgs: string[] = [];
             if (options.files) {
                 for (const file of options.files) {
-                    args.push('-f', file);
+                    fielsArgs.push('--file', file);
                 }
+
+                args.push(...fielsArgs);
             }
 
             // Handle the services option
@@ -76,6 +73,8 @@ class ContainerTemplate {
                     args.push(service);
                 }
             }
+
+            args.push('up', '-d');
 
             // Optionally, you can return a promise to wait for the process to finish:
             return new Promise<string>((resolve, reject) => {
@@ -95,7 +94,8 @@ class ContainerTemplate {
                         reject(new Error(`docker-compose process exited with code ${code}`));
                     } else {
                         // Once the docker-compose up is successful, get the container ID(s)
-                        const psArgs = ['ps', '-q', '--filter', `label=invocationId=${invocationId}`];
+
+                        const psArgs = [...fielsArgs, 'ps', '-q'];
                         const dockerPsProcess = spawn('docker-compose', psArgs, {
                             stdio: 'pipe',  // Capture the output to get the container ID(s)
                             env: options.env,  // Ensure the environment variables are set properly
@@ -108,6 +108,7 @@ class ContainerTemplate {
 
                         dockerPsProcess.on('close', (code) => {
                             if (code === 0) {
+                                this.#_id = containerId;
                                 resolve(containerId);  // Return the container ID(s)
                             } else {
                                 reject(new Error('Failed to fetch container ID(s)'));
@@ -127,55 +128,69 @@ class ContainerTemplate {
                 });
             });
         },
-    };
+    };   
 
-    constructor() {
+    constructor(socket: DockerSocket) {
+        this.#_socket = socket;
         this.#_networks = new ServicesNetworksManager(this);
         this.#_services = new ServicesManager(this);
         this.#_volumes = new ServicesVolumesManager(this);
         this.#_secrets = new SecretsManager(this);
     }
 
-    /**
-     * Generates a docker-compose YAML content for the container.
-     * @returns {string} The generated docker-compose YAML content.
-     */
-    generateComposeContent(): string {
-        return new ComposeBuilder(this).generate().trim();
-    }
+    readonly compose = {
+        /**
+         * Generates the content of the docker-compose.yml file that is used to create and configure this container.
+         *
+         * @returns {string} The content of the docker-compose.yml file as a string.
+         */
+        generateContent: (): string => {
+            return new ComposeBuilder(this).generate().trim();
+        },
+        /**
+         * Generates a docker-compose YAML file at the specified output path or a default location.
+         *
+         * Validates the output path to ensure it is a string and points to a YAML file named 'docker-compose'.
+         * Creates necessary directories and writes the generated docker-compose content to the file.
+         *
+         * @param {string} [outputPath] - The optional file path where the docker-compose file will be written.
+         *                                If not provided, a default path is used.
+         * @returns {Promise<string>} A promise that resolves with the path to the generated docker-compose YAML file.
+         * @throws {TypeError} If the `outputPath` is provided and is not a string.
+         * @throws {Error} If the `outputPath` is not a valid YAML file path or is not named 'docker-compose'.
+         */
+        generateYamlFile: async (outputPath?: string): Promise<string> => {
+            if (outputPath !== undefined) {
+                if (typeof outputPath !== 'string') { throw new TypeError(`The ${this.#_name ? `'${this.#_name}' ` : ''}container's output path (when defined) must be a string.`) }
+            }
 
-    /**
-     * Generates a docker-compose YAML file for the container.
-     * @param {string} [outputPath] The path to write the YAML file to. If not specified, the file will be written to a directory with the same name as the container and a timestamp, within the current working directory.
-     * @returns {Promise<string>} A promise that resolves to the path of the generated file.
-     * @throws {TypeError} If the provided output path is not a string.
-     * @throws {Error} If the provided output path is not a YAML file.
-     * @throws {Error} If the provided output path does not have a name of 'docker-compose'.
-     */
-    async generateComposeYaml(outputPath?: string): Promise<string> {
-        if (outputPath !== undefined) {
-            if (typeof outputPath !== 'string') { throw new TypeError(`The ${this.#_name ? `'${this.#_name}' ` : ''}container's output path (when defined) must be a string.`) }
+            const filePath = outputPath || path.join(process.cwd(), 'Docker', 'ComposeFiles', this.#_name ? this.#_name : String(Date.now()), 'docker-compose.yml');
+            const extname = path.extname(filePath).toLowerCase();
+            if (!(extname === '.yml' || extname === '.yaml')) { throw new Error(`The ${this.#_name ? `'${this.#_name}' ` : ''}container's output path (when defined) must be a YAML file.`) }
+
+            const basename = path.basename(filePath).toLowerCase();
+            if (!basename.startsWith('docker-compose')) { throw new Error(`The ${this.#_name ? `'${this.#_name}' ` : ''}container's output path (when defined) must be named 'docker-compose'.`) }
+
+            const content = this.compose.generateContent();
+
+            await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
+            await fs.promises.writeFile(filePath, content, 'utf8');
+            return filePath;
         }
-
-        const filePath = outputPath || path.join(process.cwd(), this.#_name ? this.#_name : String(Date.now()), 'docker', 'docker-compose.yml');
-        const extname = path.extname(filePath).toLowerCase();
-        if (!(extname === '.yml' || extname === '.yaml')) { throw new Error(`The ${this.#_name ? `'${this.#_name}' ` : ''}container's output path (when defined) must be a YAML file.`) }
-
-        const basename = path.basename(filePath).toLowerCase();
-        if (!basename.startsWith('docker-compose')) { throw new Error(`The ${this.#_name ? `'${this.#_name}' ` : ''}container's output path (when defined) must be named 'docker-compose'.`) }
-
-        const content = this.generateComposeContent();
-
-        await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
-        await fs.promises.writeFile(filePath, content, 'utf8');
-        return filePath;
     }
+
+    /**
+     * The container ID, or an empty string if the container has not been started yet.
+     * @readonly
+     * @type {String}
+     */
+    get id(): String { return this.#_id; }
 
     /**
      * Starts the container.
      * 
      * **Note:**
-     * This method only works on local containers, to deploy to remote containers, use the `deploy` method
+     * This method only works on local containers, to deploy to remote containers, use the `create` method
      * on from the package's `containers` module.
      * @param options An object containing the options for the "docker-compose up" command.
      * @returns A promise that resolves with the container ID(s) when the container is started successfully.
@@ -184,6 +199,7 @@ class ContainerTemplate {
      * @throws {Error} If the command fails to execute.
      */
     async up(options?: DockerComposeUpOptions): Promise<string> {
+        if (this.#_socket.configs.hostType !== 'local') { throw new Error('The up method is only available for local containers. To deploy to remote containers, use the "create" method from the containers module.'); }
         // Default options can be merged with user-provided ones if needed
         const flags: DockerComposeUpOptions = {
             detach: false,
@@ -201,8 +217,7 @@ class ContainerTemplate {
 
         const finalOptions: DockerComposeUpOptions = {
             ...flags,
-            files: [this.#_compose.generated ? this.#_compose.path : await this.generateComposeYaml()],
-            env: {}
+            files: [],
         };
 
         if (options !== undefined) {
@@ -241,12 +256,7 @@ class ContainerTemplate {
                     throw new TypeError("The 'env' option (when provided) must be an object.");
                 }
 
-                for (const [envKey, envValue] of Object.entries(options.env)) {
-                    if (typeof envValue !== 'string') { throw new TypeError(`The '${envKey}' environment variable value must be a string.`); }
-                    if (envValue.length === 0) { throw new Error(`The '${envKey}' environment variable value must not be empty.`); }
-                }
-
-                finalOptions.env = options.env;
+                this.environment.add(options.env);
             }
 
             if ('timeout' in options) {
@@ -274,26 +284,25 @@ class ContainerTemplate {
 
                 finalOptions.files?.push(...options.files);
             }
-
-            if ('labels' in options) {
-                if (typeof options.labels !== 'object' || options.labels === null || Array.isArray(options.labels)) {
-                    throw new TypeError("The 'labels' option (when provided) must be an object.");
-                }
-
-                for (const [labelKey, labelValue] of Object.entries(options.labels)) {
-                    if (labelKey === 'invocationId') { throw new Error(`The label "invocationId" is reserved and cannot be used. You attempted to use it with value: ${labelValue}`) }
-                    options.labels[labelKey] = String(labelValue);
-                }
-
-                finalOptions.labels = options.labels;
-            }
         }
 
         // Assign the container name (if specified)
-        if (this.name && finalOptions.env) { finalOptions.env['COMPOSE_PROJECT_NAME'] = this.name; }
+        this.environment.add({ 'COMPOSE_PROJECT_NAME': this.name });
 
         // Run the command
-        return this.#_compose.up(finalOptions);
+        const composePath = await this.compose.generateYamlFile();
+        finalOptions.files?.push(composePath);
+
+        try {
+            const id = await this.#_compose.up(finalOptions);
+            return id;
+        } catch (error) {
+            if (error instanceof Error) { error.message = `Failed to start the container: ${error.message}`; }
+            throw error;
+        } finally {
+            // Cleanup the generated compose file
+            fs.unlinkSync(composePath);
+        }
     }
 
     /**
@@ -308,12 +317,29 @@ class ContainerTemplate {
     set env_files(value: string | string[]) {
         if (!Array.isArray(value)) { value = [value] }
 
+        const finalFiles: string[] = [];
         for (const file of value) {
             if (typeof file !== 'string') { throw new TypeError('env_file must be a string.'); }
-            if (!fs.existsSync(file)) { throw new Error(`env_file '${file}' does not exist.`); }
+            if (fs.existsSync(file)) {
+                const stat = fs.statSync(file);
+
+                if (stat.isFile()) {
+                    finalFiles.push(file);
+                    continue;
+                }
+
+                if (stat.isDirectory()) {
+                    const files = fs.readdirSync(file, { withFileTypes: true }).filter(f => f.isFile());
+                    const envFiles = files.filter(f => f.name.endsWith('.env'));
+                    finalFiles.push(...envFiles.map(f => path.join(file, f.name)));
+                    continue;
+                }
+            } else {
+                throw new Error(`env_file '${file}' does not exist.`);
+            }
         }
 
-        this.#_env_files = value;
+        this.#_env_files = finalFiles;
     }
 
     /**

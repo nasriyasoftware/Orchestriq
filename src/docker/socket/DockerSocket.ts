@@ -1,7 +1,7 @@
 import os from 'os';
 import fs from 'fs';
 import undici from 'undici';
-import { BasicAuthorization, BearerAuthorization, DockerOptions, SocketConfig } from "../../docs/docs";
+import { BasicAuth, BearerAuth, DockerOptions, SocketConfig } from "../../docs/docs";
 
 const isWindows = os.platform() === 'win32';
 
@@ -22,7 +22,7 @@ class DockerSocket {
                 return undefined;
             }
         },
-        validateAuthOptions: (options: BasicAuthorization | BearerAuthorization | 'none' | undefined) => {
+        validateAuthOptions: (options: BasicAuth | BearerAuth | 'none' | undefined) => {
             if (options === 'none') { return; }
             if (!(options && typeof options === 'object' && Object.keys(options).length > 0)) { throw new TypeError("The 'options' parameter must be an object.") }
             if (!('type' in options)) { throw new Error(`The authorization type must be specified.`); }
@@ -56,56 +56,49 @@ class DockerSocket {
             }
         },
         request: {
-            modifyRequestInit: (options: Record<string, any>): Record<string, any> => {
+            getURL: (endpoint: string) => {
+                const url = new URL(this.#_configs.url.toString());
+                const [path, query] = endpoint.split('?');
+                url.pathname += path;
+                url.pathname = url.pathname.replace(/\/+/g, '/');
+
+                if (query) {
+                    const params = new URLSearchParams(query);
+                    params.forEach((value, key) => {
+                        url.searchParams.set(key, value);
+                    });
+                }
+
+                return url;
+            },
+            getFetchOptions: (options: Record<string, any> = { method: 'GET' }): RequestInit => {
                 const hostType = this.#_configs.hostType;
-                if (!options.headers) { options.headers = {}; }
+                const headers: Record<string, string> = {}
 
                 if (hostType === 'local') {
-                    options.dispatcher = this.#_dispatcher;
+                    options.dispatcher = this.#_dispatcher
                 }
 
                 if (hostType === 'network' || hostType === 'remote') {
-                    if (this.#_configs.authorization) {
-                        switch (this.#_configs.authorization.type) {
+                    if (this.#_configs.authentication && this.#_configs.authentication !== 'none') {
+                        if (!options.headers) { options.headers = {} }
+                        switch (this.#_configs.authentication.type) {
                             case 'Basic': {
-                                options.headers['Authorization'] = `Basic ${Buffer.from(`${this.#_configs.authorization.username}:${this.#_configs.authorization.password}`).toString('base64')}`;
+                                headers['Authorization'] = `Basic ${Buffer.from(`${this.#_configs.authentication.username}:${this.#_configs.authentication.password}`).toString('base64')}`;
                                 break;
                             }
 
                             case 'Bearer': {
-                                options.headers['Authorization'] = `Bearer ${this.#_configs.authorization.token}`;
+                                headers['Authorization'] = `Bearer ${this.#_configs.authentication.token}`;
                                 break;
                             }
                         }
                     }
-
-                    if (this.#_configs.credentials) {
-                        options.headers['Authorization'] = `Basic ${Buffer.from(`${this.#_configs.credentials.username}:${this.#_configs.credentials.password}`).toString('base64')}`;
-                    }
                 }
 
-                options.headers['Content-Type'] = 'application/json';
+                options.headers = { ...options.headers, ...headers };
                 return options;
             },
-            getURL: (endpoint: string): URL => {
-                // Ensure the base URL doesn't have trailing slashes
-                const baseUrl = this.#_configs.url.href.replace(/\/+$/, '');
-
-                // Normalize the endpoint
-                let sanitizedEndpoint = endpoint.trim().replace(/^\/+/, '');
-
-                // Construct the full URL
-                const url = new URL(`${baseUrl}/${sanitizedEndpoint}`);
-
-                if (this.#_configs.hostType === 'network' || this.#_configs.hostType === 'remote') {
-                    if (this.#_configs.credentials) {
-                        url.username = encodeURIComponent(this.#_configs.credentials.username);
-                        url.password = encodeURIComponent(this.#_configs.credentials.password);
-                    }
-                }
-
-                return url;
-            }
         },
         response: {
             parseJSON: async (response: any) => {
@@ -120,6 +113,8 @@ class DockerSocket {
     }
 
     update(options?: DockerOptions) {
+        const baseHeaders = {}
+
         if (options === undefined || options?.hostType === 'local') {
             let socketPath = isWindows ? '//./pipe/docker_engine' : '/var/run/docker.sock'
             if (options && 'socketPath' in options) {
@@ -138,18 +133,21 @@ class DockerSocket {
             const url = this.#_helpers.createURL(options.host);
             if (!url) { throw new Error(`The 'host' option must be a valid URL when the 'hostType' is set to 'network'.`); }
 
-            let authorization = undefined as BasicAuthorization | BearerAuthorization | undefined;
-            let credentials = undefined as Omit<BasicAuthorization, 'type'> | undefined;
-            if ('authorization' in options) {
-                this.#_helpers.validateAuthOptions(options.authorization);
-                if (options?.authorization !== 'none') { authorization = options.authorization; }
-            } else {
-                if ('credentials' in options && options.credentials) {
-                    this.#_helpers.validateAuthOptions({ type: 'Basic', ...options.credentials });
-                    credentials = options.credentials;
+            let authentication;
+            if ('credentials' in options && options.credentials) {
+                this.#_helpers.validateAuthOptions({ type: 'Basic', ...options.credentials });
+                url.username = encodeURIComponent(options.credentials.username);
+                url.password = encodeURIComponent(options.credentials.password);
+            }
+
+            if ('authentication' in options) {
+                this.#_helpers.validateAuthOptions(options.authentication);
+                if (options?.authentication !== 'none') {
+                    authentication = options.authentication;
                 }
             }
 
+            const baseOptions = { url, authentication, headers: baseHeaders }
             switch (options.hostType) {
                 case 'network': {
                     if ('protocol' in options) {
@@ -166,7 +164,7 @@ class DockerSocket {
                         url.port = '2375';
                     }
 
-                    this.#_helpers.changeConfigs({ hostType: 'network', url, authorization, credentials });
+                    this.#_helpers.changeConfigs({ hostType: 'network', ...baseOptions });
                     return;
                 }
 
@@ -183,7 +181,7 @@ class DockerSocket {
                         url.port = options.port.toString();
                     }
 
-                    this.#_helpers.changeConfigs({ hostType: 'remote', url, authorization, credentials });
+                    this.#_helpers.changeConfigs({ hostType: 'remote', ...baseOptions });
                     return
                 }
 
@@ -193,7 +191,6 @@ class DockerSocket {
             }
         }
     }
-
 
     /**
      * Makes a request to the Docker Engine API.
@@ -205,14 +202,14 @@ class DockerSocket {
      * @throws {Error} - Throws an error if the request fails, or if the response is not a valid JSON object when `returnJSON` is true.
      */
     async fetch(endpoint: string, options: RequestInit & { returnJSON?: boolean } = { method: 'GET', returnJSON: true }): Promise<any> {
-        const reqOptions = this.#_helpers.request.modifyRequestInit(options);
-        const url = this.#_helpers.request.getURL(endpoint);
-        const returnJSON = options?.returnJSON === true;
-
-        const proxy = this.#_configs.hostType === 'local' ? undici.fetch : fetch;
-
         try {
-            const response = await proxy(url, reqOptions);
+            const url = this.#_helpers.request.getURL(endpoint);
+            const fetchOptions = this.#_helpers.request.getFetchOptions(options);
+            const returnJSON = options?.returnJSON === true;
+
+            const proxy = this.#_configs.hostType === 'local' ? undici.fetch : fetch;
+
+            const response = await proxy(url, fetchOptions as Record<string, any>);
             const json = returnJSON ? await this.#_helpers.response.parseJSON(response) : undefined;
             if (returnJSON && !response.ok) {
                 const message = json?.message ?? `Failed to fetch: ${response.statusText}`;
@@ -225,6 +222,13 @@ class DockerSocket {
             throw error;
         }
     }
+
+    /**
+     * Retrieves the current socket configuration.
+     * 
+     * @returns {SocketConfig} The socket configuration object.
+     */
+    get configs(): SocketConfig { return this.#_configs; }
 }
 
 export default DockerSocket;

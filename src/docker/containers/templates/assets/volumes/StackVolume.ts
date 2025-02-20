@@ -1,5 +1,5 @@
+import { StackVolumOptions, VolumeDriver, VolumeDriverOptionsUnion } from "./docs";
 import helpers from "../../../../../utils/helpers";
-import { StackVolumOptions, VolumeDriver, VolumeDriverOptionsUnion } from "../../../../../docs/docs";
 import ContainerTemplate from "../../ContainerTemplate";
 
 class StackVolume {

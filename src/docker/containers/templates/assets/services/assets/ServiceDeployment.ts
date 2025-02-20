@@ -1,11 +1,11 @@
-import { Placement, ResourceConfig, ResourceLimits, ResourceReservations, RestartPolicyConfig, ServiceDeploymentData, UpdateConfig } from "../../../../../../docs/docs";
+import { ResourceLimits, ServiceDeploymentData, ResourceConfig, ResourceReservations, RestartPolicyConfig, Placement, ServiceUpdateConfig } from "./docs";
 
 class ServiceDeployment {
     #_data: ServiceDeploymentData = {}
 
     #_helpers = {
-        validateUpdateConfig: (value: UpdateConfig, type: 'update_config' | 'rollback_config') => {
-            const cofigs: UpdateConfig = {};
+        validateUpdateConfig: (value: ServiceUpdateConfig, type: 'update_config' | 'rollback_config') => {
+            const cofigs: ServiceUpdateConfig = {};
             if ('parallelism' in value) {
                 if (typeof value.parallelism !== 'number') { throw new TypeError(`The deployment's '${type}.parallelism' property (when defined) must be a number.`); }
                 if (value.parallelism < 1) { throw new SyntaxError(`The deployment's '${type}.parallelism' property must be greater than 0.`); }
@@ -224,7 +224,7 @@ class ServiceDeployment {
      * 
      * @returns {UpdateConfig | undefined} An object containing the update configuration, or undefined if not set.
      */
-    get update_config(): UpdateConfig | undefined { return this.#_data.update_config }
+    get update_config(): ServiceUpdateConfig | undefined { return this.#_data.update_config }
 
     /**
      * Sets the update configuration for the service deployment.
@@ -234,7 +234,7 @@ class ServiceDeployment {
      * 
      * @throws {TypeError} If the provided value is not a non-empty object.
      */
-    set update_config(value: UpdateConfig) {
+    set update_config(value: ServiceUpdateConfig) {
         if (!(typeof value === 'object' && Object.keys(value).length > 0)) { throw new TypeError("The deployment's 'update_config' property must be a non-empty object."); }
 
         const configs = this.#_helpers.validateUpdateConfig(value, 'update_config');
@@ -249,7 +249,7 @@ class ServiceDeployment {
      * 
      * @returns {UpdateConfig | undefined} An object containing the rollback configuration, or undefined if not set.
      */
-    get rollback_config(): UpdateConfig | undefined { return this.#_data.rollback_config }
+    get rollback_config(): ServiceUpdateConfig | undefined { return this.#_data.rollback_config }
 
     /**
      * Sets the rollback configuration for the service deployment.
@@ -259,7 +259,7 @@ class ServiceDeployment {
      * 
      * @throws {TypeError} If the provided value is not a non-empty object.
      */
-    set rollback_config(value: UpdateConfig) {
+    set rollback_config(value: ServiceUpdateConfig) {
         if (!(typeof value === 'object' && Object.keys(value).length > 0)) { throw new TypeError("The deployment's 'rollback_config' property must be a non-empty object."); }
 
         const configs = this.#_helpers.validateUpdateConfig(value, 'rollback_config');

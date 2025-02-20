@@ -1,5 +1,5 @@
+import { IPAMOptions, NetworkDriver, StackNetworkData } from "./docs";
 import helpers from "../../../../../utils/helpers";
-import { IPAMOptions, NetworkDriver, StackNetworkData } from "../../../../../docs/docs";
 import ContainerTemplate from "../../ContainerTemplate";
 import IPAM from "./IPAM";
 
