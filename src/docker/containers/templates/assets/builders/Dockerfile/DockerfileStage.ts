@@ -1,6 +1,6 @@
 import fs from 'fs';
 import DockerfileTemplate from './DockerfileTemplate';
-import { DockerfileArgItem, DockerfileCopyItem, DockerfileStageConfig, DockerfileStageOptions } from './docs/docs';
+import { DockerfileArgItem, DockerfileCopyItem, DockerfileStageConfig, DockerfileStageOptions, NPMInstallConfigs, NPMInstallOptions } from './docs/docs';
 import helpers from '../../../../../../utils/helpers';
 
 class DockerfileStage {
@@ -19,9 +19,107 @@ class DockerfileStage {
         run: [],
         cmd: [],
         entrypoint: undefined,
-        user: undefined,
+        buildUser: undefined,
+        serviceUser: undefined,
         group: undefined,
-        copy: []
+        copy: [],
+        predefinedCommands: []
+    }
+
+    #_predefinedCommands = {       
+        npm: {
+            version: {
+                value: undefined as string | undefined,
+                addCommand: () => {
+                    const version = this.#_predefinedCommands.npm.version.value;
+                    const lines = [];
+                    lines.push(`npm install npm${version && version !== 'latest' ? `@${version}` : ''} --unsafe-perm --no-progress`);
+                    lines.push('rm -rf /usr/local/lib/node_modules/npm');
+                    lines.push('mv node_modules/npm /usr/local/lib/node_modules/npm');
+                    lines.push('rm -rf node_modules');
+                    this.#_lines.push(`\n# Updating NPM version to ${version === 'latest' ? 'latest version' : version}`, ...lines.map(line => `RUN ${line}`));
+                },
+                check: () => {
+                    if (this.#_predefinedCommands.npm.version.value === undefined) { return; }
+                    this.#_predefinedCommands.npm.version.addCommand();
+                }
+            },
+            install: {
+                used: false,
+                flags: {
+                    omitOptional: { flag: `--omit=optional`, value: false },
+                    omitDev: { flag: `--omit=dev`, value: true },
+                    noAudit: { flag: '--no-audit', value: true },
+                    noFund: { flag: '--no-fund', value: true },
+                    noUpdateNotifier: { flag: '--no-update-notifier', value: true },
+                    unsafePerm: { flag: '--unsafe-perm', value: false },
+                    noProgress: { flag: '--no-progress', value: false },
+                    force: { flag: '--force', value: false },
+                    legacyPeerDeps: { flag: '--legacy-peer-deps', value: false },
+                    preferOffline: { flag: '--prefer-offline', value: false },
+                    noSave: { flag: '--no-save', value: false },
+                    ignoreScripts: { flag: '--ignore-scripts', value: false }
+                } as NPMInstallConfigs,
+                addCommand: () => {
+                    this.#_lines.push('\n# Installing dependencies using NPM');
+                    const flags = Object.entries(this.#_predefinedCommands.npm.install.flags).filter(flag => flag[1].value === true).map(flag => flag[1].flag).join(' ').trim();
+                    this.#_lines.push(`RUN npm install${flags.length > 0 ? ` ${flags}` : ''}`);
+                },
+                check: () => {
+                    if (this.#_predefinedCommands.npm.install.used) { this.#_predefinedCommands.npm.install.addCommand() }
+                }
+            }
+        }
+    }
+
+    readonly predefinedCommands = {
+        npm: {
+            /**
+             * Updates the version of NPM to use in the Dockerfile stage.
+             * Accepts either a string or a number as the version. If a string starts with 'v',
+             * the 'v' is removed. If a number is provided, it is converted to a string.
+             * If no version is specified, defaults to 'latest'.
+             *
+             * @param version - A string or number representing the NPM version to update to, defaults to 'latest'.
+             * @throws {Error} If the provided version is neither a string nor a number.
+             */
+            update: (version: string = 'latest') => {
+                if (typeof version === 'string') {
+                    if (version.startsWith('v')) { version = version.slice(1); }
+                } else if (typeof version === 'number') { version = String(version) } else {
+                    throw new Error('NPM version must be a string or a number.');
+                }
+
+                this.#_predefinedCommands.npm.version.value = version;
+            },
+            /**
+             * Configures the NPM install command with the given flags.
+             * 
+             * If no options are provided, the install command will be generated
+             * with no flags.
+             * 
+             * @param options - An object containing keys and values to configure
+             *                  the NPM install command. The keys are the flag names
+             *                  and the values are boolean values indicating whether
+             *                  to use the flag or not.
+             * @throws {TypeError} If any of the provided flags have invalid values.
+             * @throws {Error} If any of the provided flags are invalid.
+             */
+            install: (options?: NPMInstallOptions) => {
+                if (helpers.isValidObject(options)) {
+                    const flagsData = this.#_predefinedCommands.npm.install.flags;
+
+                    for (const key in options) {
+                        const value = options[key as keyof NPMInstallOptions];
+                        if (typeof value !== 'boolean') { throw new TypeError(`A NPM command was configured with a flag (${key}) with an incorrect value. Expected a boolean value but instead got ${typeof value}`) }
+                        if (!(key in flagsData)) { throw new Error(`A NPM command was configured with an invalid flag (${key}).`) }
+                        flagsData[key as keyof NPMInstallConfigs].value = value;
+                    }
+                }
+
+                this.#_predefinedCommands.npm.install.used = true;
+            }
+        }
     }
 
     constructor(template: DockerfileTemplate) {
@@ -155,19 +253,41 @@ class DockerfileStage {
     }
 
     /**
-     * Gets the user under which the Dockerfile stage will run.
+     * Gets the user under which the Dockerfile stage will build.
      * @returns {string | undefined} The user name, or undefined if not set.
      */
-    get user(): string | undefined { return this.#_config.user; }
+    get buildUser(): string | undefined { return this.#_config.buildUser; }
 
     /**
-     * Sets the user under which the Dockerfile stage will run.
-     * @param value - A string representing the user name. If undefined, the user name is not set.
+     * Sets the user under which the Dockerfile stage will build.
+     * 
+     * If set, the Dockerfile stage will be built with the specified user.
+     * Otherwise, the default user is used.
+     * @param user - A string representing the user name. If undefined, the user name is not set.
      * @throws {TypeError} If the provided value is not a string or undefined.
      */
-    set user(user: string) {
-        if (typeof user !== 'string') { throw new Error('User must be a string.'); }
-        this.#_config.user = user;
+    set buildUser(user: string) {
+        if (typeof user !== 'string') { throw new Error('Build-User must be a string.'); }
+        this.#_config.buildUser = user;
+    }
+
+    /**
+     * Gets the user under which the Dockerfile stage will run as a service.
+     * @returns {string | undefined} The user name, or undefined if not set.
+     */
+    get serviceUser(): string | undefined { return this.#_config.serviceUser; }
+
+    /**
+     * Sets the user under which the Dockerfile stage will run as a service.
+     * 
+     * If set, the Dockerfile stage will be run as a service with the specified user.
+     * Otherwise, the default user is used.
+     * @param user - A string representing the user name. If undefined, the user name is not set.
+     * @throws {TypeError} If the provided value is not a string or undefined.
+     */
+    set serviceUser(user: string) {
+        if (typeof user !== 'string') { throw new Error('Service-User must be a string.'); }
+        this.#_config.serviceUser = user;
     }
 
     /**
@@ -354,11 +474,65 @@ class DockerfileStage {
     }
 
     readonly #_generate = {
+        user: {
+            init: () => {
+                if (this.#_config.serviceUser || this.#_config.buildUser) {
+                    const argLines: string[] = [];
+                    const cmdLines: string[] = [];
+
+                    if (this.#_config.buildUser) {
+                        argLines.push(`BUILD_USER=${this.#_config.buildUser}`);
+                    }
+
+                    if (this.#_config.serviceUser) {
+                        argLines.push(`SERVICE_USER=${this.#_config.serviceUser}`);
+
+                        const group = this.#_config.group || 'service_containers';
+                        argLines.push(`SERVICE_GROUP=${group}`);
+                        cmdLines.push('# Detect distribution and create the group accordingly');
+                        const tab = ' '.repeat(4);
+                        const groupCheckCmd = ['RUN DISTRO=$(cat /etc/os-release | grep ^ID= | cut -d= -f2) && \\'];
+                        groupCheckCmd.push(`${tab}if [ "$DISTRO" = "alpine" ]; then \\`);
+                        groupCheckCmd.push(`${tab.repeat(2)}addgroup -S ${'${SERVICE_GROUP}'}; \\`);
+                        groupCheckCmd.push(`${tab}else \\`);
+                        groupCheckCmd.push(`${tab.repeat(2)}groupadd --system ${'${SERVICE_GROUP}'}; \\`);
+                        groupCheckCmd.push(`${tab}fi`);
+                        cmdLines.push(groupCheckCmd.join('\n'), '');
+
+                        cmdLines.push('# Create the user and assign it to the group');
+                        cmdLines.push('RUN id -u ${SERVICE_USER} &>/dev/null || adduser --system --ingroup ${SERVICE_GROUP} ${SERVICE_USER}');
+
+                        cmdLines.push('# Add the user to the group');
+                        cmdLines.push('RUN usermod -aG ${SERVICE_GROUP} ${SERVICE_USER}');
+                    }
+
+                    const buildUserInfo = this.#_generate.user.getBuildUserCommands()
+                    const lines = [
+                        '# Set the user and group as build arguments',
+                        `ARG ${argLines.join(' ').trim()}`,
+                        '',
+                        buildUserInfo ? `${buildUserInfo}\n` : undefined,
+                        cmdLines.join('\n').trim()
+                    ].filter(i => typeof i === 'string').join('\n');
+
+                    this.#_lines.push('', lines.trim());
+                }
+            },
+            getBuildUserCommands: () => {
+                if (this.#_config.buildUser === undefined) { return undefined; }
+                return '# Set the user used in the build process\nUSER ${BUILD_USER}';
+            },
+            setServiceInfo: () => {
+                if (this.#_config.serviceUser === undefined) { return; }
+                this.#_lines.push(`\n# Set user and group to be used in the container`);
+                this.#_lines.push(`USER ${'${SERVICE_USER}'}:${'${SERVICE_GROUP}'}`);
+            }
+        },
         args: (global: boolean = false) => {
             const args = this.#_config.args.filter(arg => global === true ? arg.global === true : arg.global !== true);
             if (args.length === 0) { return; }
             this.#_lines.push(`# ${global === true ? 'Pre' : 'Post'}-Arguments`);
-            this.#_lines.push(...args.map(arg => `ARG ${arg.name}=${arg.value}`), '');
+            this.#_lines.push(`ARG ${args.map(arg => `${arg.name}=${arg.value}`).join(' ').trim()}`)
         },
         from: () => {
             const as = this.#_config.as ? ` AS ${this.#_config.as}` : '';
@@ -385,20 +559,20 @@ class DockerfileStage {
             this.#_lines.push(`\n# Mount Volumes`);
             this.#_lines.push(...this.#_config.volumes.map(volume => `VOLUME ${volume}`));
         },
-        userInfo: () => {
-            if (this.#_config.user === undefined) { return; }
-            this.#_lines.push(`\n# Set user and group`);
-            this.#_lines.push(`USER ${this.#_config.user}${this.#_config.group ? `:${this.#_config.group}` : ''}`);
-        },
         copy: () => {
             if (this.#_config.copy.length === 0) { return; }
             this.#_lines.push(`\n# Copy Files`);
             this.#_lines.push(...this.#_config.copy.map(file => `COPY ${file.src} ${file.dest}`));
         },
         run: () => {
-            if (this.#_config.run.length === 0) { return; }
-            this.#_lines.push(`\n# Run Commands`);
-            this.#_lines.push(...this.#_config.run.map(cmd => `RUN ${cmd}`));
+            if (this.#_config.run.length > 0) {
+                this.#_lines.push(`\n# Run Commands`);
+                this.#_lines.push(...this.#_config.run.map(cmd => `RUN ${cmd}`));
+            }
+
+            if (this.#_config.serviceUser) {
+                this.#_lines.push(`RUN chown -R --no-preserve-root ${'${SERVICE_USER}'}:${'${SERVICE_GROUP}'} .`);
+            }
         },
         entrypoint: () => {
             if (this.#_config.entrypoint === undefined) { return; }
@@ -406,7 +580,7 @@ class DockerfileStage {
             this.#_lines.push(`ENTRYPOINT ${this.#_config.entrypoint.split(' ').filter(cmd => cmd.length > 0).map(cmd => `"${cmd}"`).join(', ')}`);
         },
         cmd: () => {
-            if (this.#_config.cmd === undefined) { return; }
+            if (this.#_config.cmd.length === 0) { return; }
             this.#_lines.push(`\n# Command`);
             this.#_lines.push(`CMD [${this.#_config.cmd.map(cmd => `"${cmd}"`).join(', ')}]`);
         }
@@ -423,21 +597,25 @@ class DockerfileStage {
     generate(): string {
         try {
             if (this.#_generating) { throw new Error('Cannot generate Dockerfile while already generating.'); }
-            if (this.#_config.cmd.length === 0 && this.#_config.entrypoint === undefined) { throw new Error('No command or entrypoint set.'); }
 
             this.#_generating = true;
             this.#_lines = [];
 
             this.#_generate.args(true);
             this.#_generate.from();
+            this.#_generate.user.init();
+
             this.#_generate.args();
             this.#_generate.env();
             this.#_generate.ports();
             this.#_generate.volumes();
-            this.#_generate.userInfo();
+
             this.#_generate.workdir();
             this.#_generate.copy();
+            this.#_predefinedCommands.npm.version.check();
             this.#_generate.run();
+            this.#_generate.user.setServiceInfo();
+            this.#_predefinedCommands.npm.install.check();
             this.#_generate.entrypoint();
             this.#_generate.cmd();
 
@@ -457,12 +635,29 @@ class DockerfileStage {
         if (config.volumes) { this.volumes = config.volumes; }
         if (config.env) { this.env = config.env; }
         if (config.args) { this.args = config.args; }
-        if (config.user) { this.user = config.user; }
+        if (config.buildUser) { this.buildUser = config.buildUser; }
+        if (config.serviceUser) { this.serviceUser = config.serviceUser; }
         if (config.group) { this.group = config.group; }
         if (config.entrypoint) { this.entrypoint = config.entrypoint; }
         if (config.cmd) { this.cmd = config.cmd; }
         if (config.run) { this.run = config.run; }
         if (config.copy) { this.copy = config.copy; }
+        if (config.predefinedCommands) {
+            if (!Array.isArray(config.predefinedCommands)) { config.predefinedCommands = [config.predefinedCommands]; }
+
+            for (const cmd of config.predefinedCommands) {
+                switch (cmd.name) {
+                    case 'update_npm': {
+                        this.predefinedCommands.npm.update(cmd.value);
+                        break;
+                    }
+
+                    case 'install_dependencies_npm': {
+                        this.predefinedCommands.npm.install(cmd.value);
+                    }
+                }
+            }
+        }
     }
 }
 

@@ -42,7 +42,6 @@ class ContainerTemplate {
             }
 
             if (options.noBuild) { args.push('--no-build') }
-            if (options.removeOrphans) { args.push('--remove-orphans') }
             if (options.abortOnContainerExit) { args.push('--abort-on-container-exit') }
             if (options.compatibility) { args.push('--compatibility') }
             if (options.renewAnonVolumes) { args.push('--renew-anon-volumes') }
@@ -58,13 +57,13 @@ class ContainerTemplate {
             }
 
             // Handle the files option (compose files)
-            const fielsArgs: string[] = [];
+            const filesArgs: string[] = [];
             if (options.files) {
                 for (const file of options.files) {
-                    fielsArgs.push('--file', file);
+                    filesArgs.push('--file', file);
                 }
 
-                args.push(...fielsArgs);
+                args.push(...filesArgs);
             }
 
             // Handle the services option
@@ -74,10 +73,35 @@ class ContainerTemplate {
                 }
             }
 
+            if (options.removeOrphans) {
+                const removeArgs = [...args, 'down', '--remove-orphans'];
+
+                // Preparing the promise to remove the orphan containers
+                const removePromise = new Promise<void>((resolve, reject) => {
+                    const removeProcess = spawn('docker-compose', removeArgs, { stdio: 'inherit', });
+
+                    // Handle errors or exit codes
+                    removeProcess.on('error', (err) => {
+                        reject(new Error(`Error removing the orphan containers: ${err.message}`));
+                    });
+
+                    removeProcess.on('exit', (code) => {
+                        if (code === 0) {
+                            resolve();
+                        } else {
+                            reject(new Error('Failed to remove orphan containers.'));
+                        }
+                    });
+                })
+
+                // Execute the promise to remove the orphan containers
+                await removePromise;
+            }
+
             args.push('up', '-d');
 
             // Optionally, you can return a promise to wait for the process to finish:
-            return new Promise<string>((resolve, reject) => {
+            const containerId = await new Promise<string>((resolve, reject) => {
                 // Run the command using `spawn`
                 const dockerComposeProcess = spawn('docker-compose', args, {
                     stdio: 'inherit',  // This allows the output to go directly to the terminal
@@ -94,8 +118,7 @@ class ContainerTemplate {
                         reject(new Error(`docker-compose process exited with code ${code}`));
                     } else {
                         // Once the docker-compose up is successful, get the container ID(s)
-
-                        const psArgs = [...fielsArgs, 'ps', '-q'];
+                        const psArgs = [...filesArgs, 'ps', '-q'];
                         const dockerPsProcess = spawn('docker-compose', psArgs, {
                             stdio: 'pipe',  // Capture the output to get the container ID(s)
                             env: options.env,  // Ensure the environment variables are set properly
@@ -127,8 +150,10 @@ class ContainerTemplate {
                     }
                 });
             });
+
+            return containerId;
         },
-    };   
+    };
 
     constructor(socket: DockerSocket) {
         this.#_socket = socket;

@@ -54,6 +54,11 @@ export interface BuildImageOptions {
     dockerfileName?: string;
 
     /**
+     * A path of the dockerfile
+     */
+    dockerfilePath?: string;
+
+    /**
      * Authorization information for remote contexts, if required.
      * Used to authenticate requests to private URLs or secured endpoints.
      */

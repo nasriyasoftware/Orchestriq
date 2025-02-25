@@ -3,6 +3,7 @@ import readline from 'readline';
 class ProgressLogger {
     #_lines: Map<string, number>;
     #_currentLine: number;
+    #_index = -1;
 
     constructor() {
         this.#_lines = new Map();
@@ -14,7 +15,12 @@ class ProgressLogger {
      * @param {string} id - The unique ID for the progress line.
      * @param {string} message - The progress message to display.
      */
-    log(id: string, message: string) {
+    log(message: string, id?: string) {
+        if (!id) {
+            this.#_index++;
+            id = `msg_${this.#_index}`;
+        }
+        
         if (!this.#_lines.has(id)) {
             // New progress ID: Save the line number
             this.#_lines.set(id, this.#_currentLine);

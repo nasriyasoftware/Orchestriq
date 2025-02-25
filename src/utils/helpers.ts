@@ -1,3 +1,4 @@
+import { Readable } from "stream";
 import { RegistryAuth } from "../registries/docs";
 import ProgressLogger from "./cli_logger";
 
@@ -77,9 +78,13 @@ class Helpers {
 
                             if (data.progress) { msgs.push(`${' '.repeat(20 - data.status.length)}${data.progress}`); }
                             if (data.errorDetail) { msgs.push(data.errorDetail.message); }
+                            if (data.stream) {
+                                progress.log(data.stream, data.id);
+                                continue;
+                            }
 
                             const message = msgs.filter(Boolean).join(' ');
-                            progress.log(data.id, message);
+                            progress.log(message, data.id);
                         }
 
                     } catch (err) {
@@ -87,6 +92,42 @@ class Helpers {
                     }
                 }
             }
+        }
+    }
+
+
+    /**
+     * Converts a readable stream into a single buffer.
+     * 
+     * @param stream - A readable stream, which can be either a Node.js Readable stream or a web ReadableStream.
+     * @returns A promise that resolves with a buffer containing all the data from the stream.
+     * @throws Will throw an error if the stream encounters an error during reading.
+     * 
+     * This function listens for data, end, and error events on Node.js streams. For web streams, it uses an async iterator
+     * to read the stream. The resulting data chunks are collected into a buffer.
+     */
+    async streamToBuffer(stream: ReadableStream<any> | Readable): Promise<Buffer> {
+        const chunks: Buffer[] = [];
+
+        if (stream instanceof Readable) {
+            return new Promise((resolve, reject) => {
+                stream.on('data', (chunk) => {
+                    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+                });
+
+                stream.on('end', () => {
+                    resolve(Buffer.concat(chunks)); // Combine chunks into a single buffer
+                });
+
+                stream.on('error', (err) => {
+                    reject(err); // Reject the promise if there's an error
+                });
+            });
+        } else {
+            for await (const chunk of stream) {
+                chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+            }
+            return Buffer.concat(chunks);
         }
     }
 

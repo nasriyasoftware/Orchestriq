@@ -255,6 +255,11 @@ class ComposeBuilder {
                         }
                     }
 
+                    if (service.network_mode) {
+                        const mode = (service.network_mode as string).includes(':') ? `"${service.network_mode}"` : service.network_mode;
+                        this.#_write(`network_mode: ${mode}`);
+                    }
+
                     if (service.networks) {
                         if (service.networks.length > 0) {
                             this.#_write(`networks:`).#_incIndent();
@@ -275,15 +280,18 @@ class ComposeBuilder {
                         if (typeof service.restart === 'string') {
                             this.#_write(`restart: ${service.restart}`);
                         } else {
-                            this.#_write(`restart:`).#_incIndent();
-
                             const restart = service.restart;
-                            this.#_write(`policy: ${restart.policy}`);
                             if (restart.policy === 'on-failure') {
-                                this.#_write(`times: ${(restart as FailureRestartOption).times}`);
-                            }
+                                this.#_write(`restart:`).#_incIndent();
+                                this.#_write(`policy: ${restart.policy}`);
+                                if (restart.policy === 'on-failure') {
+                                    this.#_write(`times: ${(restart as FailureRestartOption).times}`);
+                                }
 
-                            this.#_decIndent();
+                                this.#_decIndent();
+                            } else {
+                                this.#_write(`restart: ${restart.policy}`);
+                            }
                         }
                     }
 

@@ -1,5 +1,5 @@
 import fs from 'fs';
-import path from "path";
+import path from 'path';
 import tarball from "../../utils/Tarball";
 import helpers from "../../utils/helpers";
 import DockerSocket from "../socket/DockerSocket";
@@ -320,32 +320,37 @@ class ImagesManager {
         }
     }
 
+
     /**
-     * Builds a Docker image from a Dockerfile and a build context.
-     * @param options - Options for building the Docker image.
-     * @param options.name - The name of the image to build.
-     * @param options.tag - The tag of the image to build. If not provided, the image will be built with the "latest" tag.
-     * @param options.context - The build context to use. Can be a directory path, a .tar file path, or a URL.
-     * @param options.dockerfileName - The name of the Dockerfile to use. Default is "Dockerfile".
-     * @param options.noCache - If true, the build process will not use the cache. Default is false.
-     * @param options.removeIntermediate - If true, the build process will remove intermediate containers. Default is false.
-     * @param options.forceRemoveIntermediate - If true, the build process will force remove intermediate containers. Default is false.
-     * @param options.pullBaseImages - If true, the build process will pull the base images. Default is false.
-     * @param options.networkMode - The network mode to use for the build process. Default is "default".
-     * @param options.platform - The platform to use for the build process. Default is the platform of the host.
-     * @param options.labels - Labels to apply to the built image.
-     * @param options.buildArgs - Build-time variables to pass to the build process.
-     * @param options.outputs - Outputs to capture from the build process.
-     * @param options.verbose - If true, the build process will log detailed progress. Default is false.
+     * Builds a Docker image using the provided build options.
+     * 
+     * @param {BuildImageOptions} options - Options for building the image.
+     *   @param {string} options.name - The name of the image to build.
+     *   @param {string} [options.tag='latest'] - The tag to assign to the built image.
+     *   @param {string} [options.context] - The build context, can be a URL or local directory.
+     *   @param {string} [options.dockerfileName='Dockerfile'] - The name of the Dockerfile.
+     *   @param {string} [options.dockerfilePath] - The path to the Dockerfile if different from context.
+     *   @param {boolean} [options.noCache] - If true, does not use cache when building the image.
+     *   @param {boolean} [options.removeIntermediate] - If true, removes intermediate containers after a successful build.
+     *   @param {boolean} [options.forceRemoveIntermediate] - If true, always removes intermediate containers.
+     *   @param {boolean} [options.pullBaseImages] - If true, always attempts to pull a newer version of the base image.
+     *   @param {string} [options.networkMode] - Sets the networking mode for the RUN instructions during build.
+     *   @param {string} [options.platform] - Sets the platform if the server is multi-platform capable.
+     *   @param {Record<string, string>} [options.labels] - Sets metadata for an image.
+     *   @param {Record<string, string>} [options.buildArgs] - Sets build-time variables.
+     *   @param {Array<{ key: string, value: string }>} [options.outputs] - Configures output locations.
+     *   @param {boolean} [options.verbose=false] - If true, logs detailed progress of the build process.
+     * 
      * @returns {Promise<void>} A promise that resolves when the image is successfully built.
-     * @throws {TypeError} Throws an error if any of the options are invalid.
+     * 
+     * @throws {TypeError} Throws an error if any required option is invalid or missing.
      * @throws {Error} Throws an error if unable to build the image.
      */
     async build(options: BuildImageOptions): Promise<void> {
         const data: BuildImageEndpointParams = {};
         const configs = {
             verbose: false,
-            dockerfile: 'Dockerfile',
+            dockerfile: { name: 'Dockerfile', path: undefined as string | undefined },
             context: {
                 tar: { path: null as unknown as string, isTemp: false },
                 path: null as unknown as string
@@ -403,6 +408,7 @@ class ImagesManager {
 
                     if (isDirectory) {
                         configs.context.path = options.context;
+                        configs.context.tar.isTemp = true;
                     } else {
                         if (path.extname(options.context) !== '.tar') { throw new Error(`The build context path (${options.context}) must be a directory or a .tar file.`); }
                         configs.context.tar.path = options.context;
@@ -410,23 +416,64 @@ class ImagesManager {
                 }
             } else {
                 configs.context.path = process.cwd();
+                configs.context.tar.isTemp = true;
             }
 
             if ('dockerfileName' in options) {
                 if (typeof options.dockerfileName !== 'string' || options.dockerfileName.length === 0) { throw new TypeError('The Dockerfile name must be a non-empty string.'); }
-                configs.dockerfile = data.dockerfile = options.dockerfileName;
+                configs.dockerfile.name = data.dockerfile = options.dockerfileName;
+            }
+
+            if ('dockerfilePath' in options) {
+                if (typeof options.dockerfilePath !== 'string') { throw new TypeError(`The "dockerfilePath" (when provided) must be a string but instead got ${typeof options.dockerfilePath}`) }
+                configs.dockerfile.path = options.dockerfilePath;
             }
 
             // Validate and build the context path.
             if (configs.context.path) {
-                const content = fs.readdirSync(configs.context.path, { withFileTypes: true });
-                if (content.length === 0) { throw new Error(`The build context (${configs.context.path}) must not be empty.`); }
+                const cache = {
+                    dockerfilePath: configs.dockerfile.path || configs.context.path,
+                    contextHasDockerFile: false,
+                    backupFilePath: undefined as undefined | string,
+                    copiedFilePath: undefined as undefined | string
+                }
 
-                const Dockerfile = content.filter(f => f.isFile()).find(f => f.name === configs.dockerfile)
-                if (!Dockerfile) { throw new Error(`The build context (${configs.context.path}) must contain a Dockerfile named "${configs.dockerfile}" as per the "dockerfileName" option.`); }
+                if (configs.dockerfile.path && configs.dockerfile.path !== configs.context.path) {
+                    if (!path.isAbsolute(configs.dockerfile.path)) {
+                        cache.dockerfilePath = path.join(configs.context.path, configs.dockerfile.path);
+                    }
+
+                    if (!fs.existsSync(cache.dockerfilePath)) { throw new Error(`The path you provided for the dockerfile (${configs.dockerfile.path}) doesn't exist`) }
+                    if (!fs.existsSync(path.join(cache.dockerfilePath, configs.dockerfile.name))) { throw new Error(`The path you provided for the dockerfile (${configs.dockerfile.path}) doesn't have a docker file called ${configs.dockerfile.name}`) }
+
+                    cache.contextHasDockerFile = fs.existsSync(path.join(configs.context.path, configs.dockerfile.name));
+                    if (cache.contextHasDockerFile) {
+                        // Rename the existent file to prevent overwriting the original one
+                        cache.backupFilePath = path.join(configs.context.path, `${configs.dockerfile.name}_${Date.now()}_backup`);
+                        await fs.promises.copyFile(path.join(configs.context.path, configs.dockerfile.name), cache.backupFilePath as string);
+                    }
+
+                    // Copy the dockerfile to the context folder
+                    cache.copiedFilePath = path.join(configs.context.path, configs.dockerfile.name);
+                    await fs.promises.copyFile(path.join(cache.dockerfilePath, configs.dockerfile.name), cache.copiedFilePath as string);
+                } else {
+                    if (!fs.existsSync(path.join(configs.context.path, configs.dockerfile.name))) { throw new Error(`The build context (${configs.context.path}) must contain a Dockerfile named "${configs.dockerfile.name}" as per the "dockerfileName" option.`); }
+                }
 
                 configs.context.tar.path = await tarball.build(path.resolve(configs.context.path));
                 configs.context.tar.isTemp = true;
+
+                if (cache.copiedFilePath) {
+                    // Delete the temp file
+                    await fs.promises.unlink(cache.copiedFilePath);
+                }
+
+                if (cache.contextHasDockerFile) {                  
+                    // Rename the original file to the original name
+                    await fs.promises.copyFile(cache.backupFilePath as string, path.join(configs.context.path, configs.dockerfile.name));
+                    // Delete the backup file
+                    await fs.promises.unlink(cache.backupFilePath as string);
+                }
             }
 
             if ('noCache' in options) {
@@ -490,7 +537,10 @@ class ImagesManager {
             // Preparing request
             const queryParams = new URLSearchParams(data as Record<string, string>);
             const endpoint = `/build?${queryParams.toString()}`;
-            if (configs.context.tar.path) { reqOptions.body = Buffer.from(fs.readFileSync(configs.context.tar.path)); }
+            if (configs.context.tar.path) {
+                const stream = fs.createReadStream(configs.context.tar.path);
+                reqOptions.body = await helpers.streamToBuffer(stream);
+            }
 
             const response = await this.#_socket.fetch(endpoint, reqOptions);
             if (!response.ok) {
@@ -505,7 +555,9 @@ class ImagesManager {
             throw error;
         } finally {
             // Cleanup
-            if (configs.context.tar.isTemp) { await fs.promises.unlink(configs.context.tar.path); }
+            if (configs.context.tar.isTemp && await fs.existsSync(configs.context.tar.path)) {
+                await fs.promises.unlink(configs.context.tar.path);
+            }
         }
     }
 }

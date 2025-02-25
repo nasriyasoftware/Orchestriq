@@ -192,6 +192,7 @@ export interface FailureRestartOption extends RestartOption {
 
 export type RestartPolicy = 'on-failure' | 'unless-stopped' | 'always' | 'no';
 export type DockerDriverType = DockerLoggingDriver['driver'];
+export type NetworkMode = 'host' | 'bridge' | 'none' | { type: 'container' | 'service', value: string } | string;
 
 export interface ServiceCreationOptions {
     /**The name of the service */
@@ -218,8 +219,9 @@ export interface ServiceCreationOptions {
     command?: string[];
     dependsOn?: string[];
     networks?: string[];
+    network_mode?: NetworkMode;
     user?: string;
-    restart?: FailureRestartOption | RestartOption;
+    restart?: FailureRestartOption | RestartPolicy;
     logging?: DockerLoggingDriver;
     healthcheck?: HealthcheckData;
     external_links?: ExternalLinkRecord[];

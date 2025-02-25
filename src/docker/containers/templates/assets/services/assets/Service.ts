@@ -1,4 +1,4 @@
-import { Port, ServiceVolume, FailureRestartOption, RestartOption, DockerLoggingDriver, ExternalLinkRecord, ServiceConfigsData, ServiceCreationOptions, RestartPolicy, DockerDriverType } from './docs';
+import { Port, ServiceVolume, FailureRestartOption, RestartOption, DockerLoggingDriver, ExternalLinkRecord, ServiceConfigsData, ServiceCreationOptions, RestartPolicy, DockerDriverType, NetworkMode } from './docs';
 import ContainerTemplate from '../../../ContainerTemplate';
 import ServiceBuild from './ServiceBuild';
 import Environment from '../../Environment';
@@ -6,6 +6,7 @@ import Healthcheck from './Healthcheck';
 import ServiceDeployment from './ServiceDeployment';
 import fs from 'fs';
 import path from 'path';
+import helpers from '../../../../../../utils/helpers';
 
 class Service {
     #_container: ContainerTemplate;
@@ -28,6 +29,7 @@ class Service {
     #_dependsOn: string[] = [];
 
     #_networks: string[] = [];
+    #_network_mode: NetworkMode = 'bridge';
     #_user = 'node';
     #_restart: FailureRestartOption | RestartOption | RestartPolicy = 'unless-stopped';
 
@@ -110,6 +112,7 @@ class Service {
         if (options.command) { this.command = options.command; }
         if (options.dependsOn) { this.add.dependsOn(options.dependsOn); }
         if (options.networks) { this.add.networks(options.networks); }
+        if (options.network_mode) { this.network_mode = options.network_mode; }
         if (options.user) { this.user = options.user; }
         if (options.restart) { this.restart = options.restart; }
         if (options.logging) { this.logging = options.logging; }
@@ -125,6 +128,41 @@ class Service {
     // #########################################################################
     // #########################################################################
     // #########################################################################
+
+    /**
+     * Sets the network mode for the service.
+     * If the mode is an object with `type` and `value` properties, the value of `type` must be either 'container' or 'service',
+     * and the value of `value` must be a non-empty string.
+     * If the mode is a string, it must be one of 'bridge', 'host', or 'none'.
+     * @param mode The network mode for the service.
+     * @throws {TypeError} If the network mode is invalid.
+     */
+    set network_mode(mode: NetworkMode) {
+        if (typeof mode === 'object' && (mode.type === 'container' || mode.type === 'service')) {
+            if (typeof mode.value !== 'string' || mode.value.length === 0) {
+                throw new TypeError('Network mode value must be a non-empty string.');
+            }
+
+            this.#_network_mode = `${mode.type}:${mode.value}`;
+            return;
+        }
+
+        if (typeof mode !== 'string') { throw new TypeError('Network mode must be a string.'); }
+        if (!['bridge', 'host', 'none'].includes(mode)) { throw new TypeError('Invalid network mode.'); }
+
+        this.#_network_mode = mode;
+    }
+
+
+    /**
+     * Retrieves the network mode for the service.
+     * The network mode determines whether the service uses a bridge, host, or none network.
+     * If the mode is an object with `type` and `value` properties, the value of `type` must be either 'container' or 'service',
+     * and the value of `value` must be a non-empty string.
+     * If the mode is a string, it must be one of 'bridge', 'host', or 'none'.
+     * @returns {NetworkMode} The network mode for the service.
+     */
+    get network_mode(): NetworkMode { return this.#_network_mode }
 
     /**
      * Sets the path to a file containing environment variables in the format
@@ -310,7 +348,6 @@ class Service {
         let policy: FailureRestartOption | RestartOption;
         if (typeof value === 'string') {
             if (!policies.includes(value)) { throw new TypeError(`${value} is not a valid restart policy. Valid policies are: ${policies.join(', ')}`); }
-
 
             if (value === 'on-failure') {
                 policy = { policy: 'on-failure', times: 5 };

@@ -1,6 +1,7 @@
 import DockerfileStage from "./DockerfileStage";
-import fs from 'fs/promises';
 import { DockerfileStageOptions } from "./docs/docs";
+import fs from 'fs/promises';
+import path from "path";
 
 class DockerfileTemplate {
     #_stages = new Map<string, DockerfileStage>();
@@ -23,7 +24,6 @@ class DockerfileTemplate {
             this.#_lines = [];
             this.#_lines.push(
                 '# Comments are provided throughout this file to help you get started.',
-                '# Comments are provided throughout this file to help you get started.\n',
                 '# Want to help us make this template better? Share your feedback here: https://forms.gle/ybq9Krt8jtBL3iCk7\n'                
             );
 
@@ -57,7 +57,8 @@ class DockerfileTemplate {
     async generate(outputPath: string) {
         try {
             const content = this.generateContent();
-            await fs.writeFile(outputPath, content, { encoding: 'utf-8' });
+            await fs.mkdir(path.dirname(outputPath), { recursive: true }); // Ensure parent directories exist
+            await fs.writeFile(path.resolve(outputPath), content, { encoding: 'utf-8' });
         } catch (error) {
             if (error instanceof Error) { error.message = `Error generating Dockerfile: ${error.message}`; }
             throw error;

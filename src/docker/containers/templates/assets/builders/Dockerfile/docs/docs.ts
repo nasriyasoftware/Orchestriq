@@ -39,15 +39,17 @@ export interface DockerfileStageConfig {
     env: Map<string, any>;
     /**The arguments to set in the Dockerfile */
     args: DockerfileArgItem[];
-    /**The user to set in the Dockerfile */
-    user?: string;
+    /**The user that will be used when building the Dockerfile */
+    buildUser?: string;
+    /**The user that will be used to run the service */
+    serviceUser?: string;
     /**The group to set in the Dockerfile */
     group?: string;
     /**
      * The entrypoint to set in the Dockerfile.
      * 
      * **Note**: When using `entrypoint` and `cmd` together, the `entrypoint` takes
-     * presedency and runs first, and the `cmd` will act as arguments that will be
+     * precedency and runs first, and the `cmd` will act as arguments that will be
      * passed to the executable of the entrypoint.
      */
     entrypoint?: string;
@@ -56,7 +58,7 @@ export interface DockerfileStageConfig {
      * 
      * **Notes**:
      * - When using `entrypoint` and `cmd` together, the `entrypoint` takes
-     * presedency and runs first, and the `cmd` will act as arguments that will be
+     * precedency and runs first, and the `cmd` will act as arguments that will be
      * passed to the executable of the entrypoint.
      * - When used without `entrypoint`, the `cmd` will be the command to run in the container.
      */
@@ -65,6 +67,8 @@ export interface DockerfileStageConfig {
     run: string[];
     /**The files to copy in the Dockerfile */
     copy: DockerfileCopyItem[];
+    /**The predefined commands to run in the Dockerfile */
+    predefinedCommands: DockerPredefinedRunCommand[];
 }
 
 export interface DockerfileStageOptions {
@@ -75,22 +79,24 @@ export interface DockerfileStageOptions {
     /**The working directory for the Dockerfile */
     workdir?: string;
     /**The ports to expose in the Dockerfile. */
-    ports?: string[];
+    ports?: (string | number)[];
     /**The volumes to mount in the Dockerfile */
     volumes?: string | string[];
     /**The environment variables to set in the Dockerfile */
     env?: Record<string, any>;
     /**The arguments to set in the Dockerfile */
     args?: DockerfileArgItem | DockerfileArgItem[];
-    /**The user to set in the Dockerfile */
-    user?: string;
+    /**The user that will be used when building the Dockerfile */
+    buildUser?: string;
+    /**The user that will be used to run the service */
+    serviceUser?: string;
     /**The group to set in the Dockerfile */
     group?: string;
     /**
      * The entrypoint to set in the Dockerfile.
      * 
      * **Note**: When using `entrypoint` and `cmd` together, the `entrypoint` takes
-     * presedency and runs first, and the `cmd` will act as arguments that will be
+     * precedency and runs first, and the `cmd` will act as arguments that will be
      * passed to the executable of the entrypoint.
      */
     entrypoint?: string;
@@ -99,7 +105,7 @@ export interface DockerfileStageOptions {
      * 
      * **Notes**:
      * - When using `entrypoint` and `cmd` together, the `entrypoint` takes
-     * presedency and runs first, and the `cmd` will act as arguments that will be
+     * precedency and runs first, and the `cmd` will act as arguments that will be
      * passed to the executable of the entrypoint.
      * - When used without `entrypoint`, the `cmd` will be the command to run in the container.
      */
@@ -108,4 +114,80 @@ export interface DockerfileStageOptions {
     run?: string | string[];
     /**The files to copy in the Dockerfile */
     copy?: DockerfileCopyItem[];
+    /**The predefined commands to run in the Dockerfile */
+    predefinedCommands?: DockerPredefinedRunCommand | DockerPredefinedRunCommand[];
+}
+
+interface DockerRunUpdateNPM {
+    name: 'update_npm';
+    /**The version of NPM to use. Default: `latest` */
+    value?: string
+}
+
+interface DockerRunInstallNPMDependencies {
+    name: 'install_dependencies_npm';
+    value?: NPMInstallOptions
+}
+
+export type DockerPredefinedRunCommand = DockerRunUpdateNPM | DockerRunInstallNPMDependencies;
+
+export interface NPMInstallOptions {
+    /** Omit optional dependencies */
+    omitOptional?: boolean;
+    /** Omit dev dependencies. Defaults: `true` */
+    omitDev?: boolean;
+    /** Don't run security audits. Defaults: `true` */
+    noAudit?: boolean;
+    /** Don't display funding messages. Defaults: `true` */
+    noFund?: boolean;
+    /** Don't show update notifications. Defaults: `true` */
+    noUpdateNotifier?: boolean;
+    /** Allow scripts to run as root inside Docker */
+    unsafePerm?: boolean;
+    /** Don't show progress bar */
+    noProgress?: boolean;
+    /** Force reinstall of already installed packages */
+    force?: boolean;
+    /** Use legacy peer dependency resolution */
+    legacyPeerDeps?: boolean;
+    /** Prefer offline installation */
+    preferOffline?: boolean;
+    /** Don't modify package.json or lock files */
+    noSave?: boolean;
+    /** Don't execute package lifecycle scripts */
+    ignoreScripts?: boolean;
+}
+
+interface NPMInstallConfigItem {
+    /**The flag used in the command */
+    flag: string;
+    /**A boolean value to determine if the flag should be used. Default: `false` */
+    value: boolean
+}
+
+export interface NPMInstallConfigs {
+    /** Omit optional dependencies */
+    omitOptional: NPMInstallConfigItem;
+    /** Omit dev dependencies */
+    omitDev: NPMInstallConfigItem;
+    /** Don't run security audits */
+    noAudit: NPMInstallConfigItem;
+    /** Don't display funding messages */
+    noFund: NPMInstallConfigItem;
+    /** Don't show update notifications */
+    noUpdateNotifier: NPMInstallConfigItem;
+    /** Allow scripts to run as root inside Docker */
+    unsafePerm: NPMInstallConfigItem;
+    /** Don't show progress bar */
+    noProgress: NPMInstallConfigItem;
+    /** Force reinstall of already installed packages */
+    force: NPMInstallConfigItem;
+    /** Use legacy peer dependency resolution */
+    legacyPeerDeps: NPMInstallConfigItem;
+    /** Prefer offline installation */
+    preferOffline: NPMInstallConfigItem;
+    /** Don't modify package.json or lock files */
+    noSave: NPMInstallConfigItem;
+    /** Don't execute package lifecycle scripts */
+    ignoreScripts: NPMInstallConfigItem;
 }
