@@ -21,6 +21,29 @@ class Healthcheck {
     }
 
     /**
+     * Converts the health check configuration to a JSON object.
+     * 
+     * @returns {HealthcheckData} A JSON object containing the health check configuration.
+     * The object contains the following properties:
+     * - `test`: An array of strings representing the command to run to check health.
+     * - `interval`: A string specifying the time between checks.
+     * - `retries`: A number indicating the number of retries before marking as unhealthy.
+     * - `start_period`: A string denoting the initial grace period before starting checks.
+     * - `timeout`: A string defining the maximum time for the health check to run.
+     * - `disable`: A boolean to indicate whether to disable the health check.
+     */
+    toJSON(): HealthcheckData {
+        return {
+            test: [...this.test],
+            interval: this.interval,
+            retries: this.retries,
+            start_period: this.start_period,
+            timeout: this.timeout,
+            disable: this.disable
+        };
+    }
+
+    /**
      * Sets the health check configuration for the service.
      * Validates and assigns the provided health check data to the internal
      * configuration. The 'test' property is mandatory, while other properties

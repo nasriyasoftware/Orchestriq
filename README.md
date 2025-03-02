@@ -18,7 +18,7 @@ Made with ❤️ in **Palestine** 🇵🇸
 ___
 ### Installation
 ```shell
-npm i @nasriya/orchestriq
+npm i @nasriya/orchestriq -g
 ```
 
 ### Importing

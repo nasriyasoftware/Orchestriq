@@ -42,6 +42,7 @@ type AnonymousVolume = Pick<BaseServiceVolume, 'containerPath' | 'read_only'>;
 type NamedVolume = Pick<BaseServiceVolume, 'name' | 'containerPath' | 'read_only'>;
 type BindVolume = Pick<BaseServiceVolume, 'hostPath' | 'containerPath' | 'read_only'>;
 export type ServiceVolume = AnonymousVolume | NamedVolume | BindVolume;
+export type ServiceVolumeConfig = AnonymousVolume & { type: 'anonymous'} | NamedVolume & { type: 'named' } | BindVolume & { type: 'bind' };
 
 export type DockerLoggingDriver = {
     driver: 'json-file';

@@ -156,10 +156,22 @@ class Helpers {
         reqOptions.headers['X-Registry-Auth'] = Buffer.from(JSON.stringify({ ...authConfig, serveraddress })).toString('base64');
     }
 
-    isValidObject(obj: any): boolean { return this.isObject(obj) && this.notEmptyObject(obj); }
+    isValidObject(obj: any): boolean { return this.isObject(obj) && this.isNotEmptyObject(obj); }
     isObject(obj: any): boolean { return typeof obj === 'object' && obj !== null; }
-    notEmptyObject(obj: any): boolean { return this.isObject(obj) && Object.keys(obj).length > 0; }
+    isNotEmptyObject(obj: any): boolean { return this.isObject(obj) && Object.keys(obj).length > 0; }
     isValidEmail(email: string): boolean { return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email); }
+
+    /**
+     * Checks if the given object has the specified property as its own property.
+     * This method does not check properties inherited through the prototype chain.
+     *
+     * @param obj - The object to check for the property.
+     * @param prop - The name of the property to check for.
+     * @returns A boolean indicating whether the object has the specified property as its own property.
+     */
+    hasOwnProperty(obj: any, prop: string): boolean {
+        return Object.prototype.hasOwnProperty.call(obj, prop);
+    }
 }
 
 const helpers = new Helpers();

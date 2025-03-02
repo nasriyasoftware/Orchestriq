@@ -1,4 +1,4 @@
-import { Port, ServiceVolume, FailureRestartOption, RestartOption, DockerLoggingDriver, ExternalLinkRecord, ServiceConfigsData, ServiceCreationOptions, RestartPolicy, DockerDriverType, NetworkMode } from './docs';
+import { Port, ServiceVolume, FailureRestartOption, RestartOption, DockerLoggingDriver, ExternalLinkRecord, ServiceConfigsData, ServiceCreationOptions, RestartPolicy, DockerDriverType, NetworkMode, ServiceVolumeConfig } from './docs';
 import ContainerTemplate from '../../../ContainerTemplate';
 import ServiceBuild from './ServiceBuild';
 import Environment from '../../Environment';
@@ -19,7 +19,7 @@ class Service {
     #_build: ServiceBuild;
 
     #_ports: Port[] = [];
-    #_volumes: ServiceVolume[] = [];
+    #_volumes: ServiceVolumeConfig[] = [];
 
     #_environment = new Environment();
     #_env_files: string[] = [];
@@ -994,7 +994,7 @@ class Service {
          */
         volumes: (value: ServiceVolume | ServiceVolume[]) => {
             if (!Array.isArray(value)) { value = [value] }
-            const volumes: ServiceVolume[] = [];
+            const volumes: ServiceVolumeConfig[] = [];
             const PATH_REGEX = /^([a-zA-Z]:\\|\\\\|\/|\.?\/|\.{2}\/).*$/;
 
             for (const volume of value) {
@@ -1012,11 +1012,11 @@ class Service {
                     if (typeof volume.read_only !== 'boolean') { throw new TypeError('Volume read_only (when provided) must be a boolean.'); }
                 }
 
-                if ('name' in volume) {
+                if ('name' in volume) {                    
                     if (typeof volume.name !== 'string') { throw new TypeError('Volume name (when provided) must be a string.'); }
                     if (volume.name.length === 0) { throw new SyntaxError('Volume name cannot be empty.'); }
                     if (!(volume.name in this.#_container.volumes.list)) { throw new Error(`Volume name '${volume.name}' is not defined in the container's volumes.`); }
-                    volumes.push({ containerPath: volume.containerPath, name: volume.name, read_only: volume.read_only });
+                    volumes.push({ type: 'named', containerPath: volume.containerPath, name: volume.name, read_only: volume.read_only });
                     continue;
                 }
 
@@ -1025,11 +1025,11 @@ class Service {
                     if (volume.hostPath.length === 0) { throw new SyntaxError('Volume hostPath cannot be empty.'); }
                     if (!PATH_REGEX.test(volume.hostPath)) { throw new SyntaxError('Volume hostPath must be a valid path.'); }
                     if (!fs.existsSync(volume.hostPath)) { throw new Error(`Volume hostPath '${volume.hostPath}' does not exist.`); }
-                    volumes.push({ containerPath: volume.containerPath, hostPath: volume.hostPath, read_only: volume.read_only });
+                    volumes.push({ type: 'bind', containerPath: volume.containerPath, hostPath: volume.hostPath, read_only: volume.read_only });
                     continue;
                 }
 
-                volumes.push({ containerPath: volume.containerPath, read_only: volume.read_only });
+                volumes.push({ type: 'anonymous', containerPath: volume.containerPath, read_only: volume.read_only });
             }
 
             if (volumes.length > 0) {
@@ -1225,9 +1225,9 @@ class Service {
 
     /**
      * Gets the list of volumes for the service.
-     * @returns {ServiceVolume[]} An array of ServiceVolume objects representing the volumes.
+     * @returns {ServiceVolumeConfig[]} An array of ServiceVolumeConfig objects representing the volumes.
      */
-    get volumes(): ServiceVolume[] { return this.#_volumes; }
+    get volumes(): ServiceVolumeConfig[] { return this.#_volumes; }
 
 
     /**
