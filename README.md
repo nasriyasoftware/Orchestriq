@@ -1,11 +1,6 @@
 [![N|Solid](https://static.wixstatic.com/media/72ffe6_da8d2142d49c42b29c96ba80c8a91a6c~mv2.png)](https://nasriya.net)
 
 # Orchestriq.
-<div style="display:flex;height:60px;gap:15px;margin-bottom:15px;">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/d/d9/Node.js_logo.svg" alt="Node.js logo">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/7/70/Docker_logo.png" alt="Docker Logo">
-</div>
-
 [![Static Badge](https://img.shields.io/badge/license-Free_(Restricted)-blue)](https://github.com/nasriyasoftware/Orchestriq?tab=License-1-ov-file) ![Repository Size](https://img.shields.io/github/repo-size/nasriyasoftware/Orchestriq.svg) ![Last Commit](https://img.shields.io/github/last-commit/nasriyasoftware/Orchestriq.svg) [![Status](https://img.shields.io/badge/Status-Stable-green.svg)](link-to-your-status-page)
 
 ##### Visit us at [www.nasriya.net](https://nasriya.net).
