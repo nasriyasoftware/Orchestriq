@@ -1,11 +1,19 @@
 [![N|Solid](https://static.wixstatic.com/media/72ffe6_da8d2142d49c42b29c96ba80c8a91a6c~mv2.png)](https://nasriya.net)
 
 # Orchestriq.
+<div style="display:flex;height:60px;gap:15px;margin-bottom:15px;">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/d/d9/Node.js_logo.svg" alt="Node.js logo">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/7/70/Docker_logo.png" alt="Docker Logo">
+</div>
+
 [![Static Badge](https://img.shields.io/badge/license-Free_(Restricted)-blue)](https://github.com/nasriyasoftware/Orchestriq?tab=License-1-ov-file) ![Repository Size](https://img.shields.io/github/repo-size/nasriyasoftware/Orchestriq.svg) ![Last Commit](https://img.shields.io/github/last-commit/nasriyasoftware/Orchestriq.svg) [![Status](https://img.shields.io/badge/Status-Stable-green.svg)](link-to-your-status-page)
 
 ##### Visit us at [www.nasriya.net](https://nasriya.net).
 
 Made with ❤️ in **Palestine** 🇵🇸
+___
+#### Overview
+Orchestriq is a TypeScript library designed for seamless Docker management via code. It provides a high-level API to interact with containers, images, networks, and volumes, supporting both local Docker daemons and remote Docker hosts over the internet. With a clean and efficient design, Orchestriq simplifies automation, orchestration, and containerized application management.
 
 > [!IMPORTANT]
 > 
@@ -18,7 +26,7 @@ Made with ❤️ in **Palestine** 🇵🇸
 ___
 ### Installation
 ```shell
-npm i @nasriya/orchestriq -g
+npm i @nasriya/orchestriq
 ```
 
 ### Importing
@@ -32,4 +40,41 @@ Import in **CommonJS (CJS)**
 const orchestriq = require('@nasriya/orchestriq').default;
 ```
 ___
-Documentations are coming ...
+
+### Connect to Docker
+
+Connect to Docker running locally on the current machine:
+```js
+const docker = new orchestriq.Docker();
+```
+
+If you need to set the socket path:
+```js
+const docker = new orchestriq.Docker({
+    hostType: 'local',
+    socketPath: '/var/run/docker.sock'
+});
+```
+
+Connect to remotely to the Docker daemon's socket:
+```js
+const docker = new orchestriq.Docker({
+    hostType: 'remote',
+    /**The URL of the Docker daemon to connect to. */
+    host: 'https://daemon.nasriya.net/',
+    /**If authentication is required (as it should be), provide the nessary credentials here. */
+    authentication: {
+        type: 'Basic',
+        username: process.env.DOCKER_DAEMON_USERNAME,
+        password: process.env.DOCKER_DAEMON_PASSWORD
+    }
+});
+```
+**Note:** If you decided to expose the daemon APIs on the internet, you should setup authentications and access list to protect your the Docker APIs from unauthorized access.
+
+___
+Wanna learn more? [Checkout our Wiki](https://github.com/nasriyasoftware/Orchestriq/wiki).
+
+___
+## License
+Please read the license from [here](https://github.com/nasriyasoftware/Orchestriq?tab=License-1-ov-file).
