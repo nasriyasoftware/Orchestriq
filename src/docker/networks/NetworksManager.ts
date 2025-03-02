@@ -1,6 +1,6 @@
-import { Network, StackNetworkData } from "../../docs/docs";
 import DockerSocket from "../socket/DockerSocket";
 import StackNetwork from "../containers/templates/assets/networks/StackNetwork";
+import { Network, StackNetworkData } from "../containers/templates/assets/networks/docs";
 
 class NetworksManager {
     #_socket: DockerSocket;

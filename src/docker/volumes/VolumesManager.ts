@@ -1,4 +1,5 @@
-import { CreateVolumeOptions, Volume } from "../../docs/docs";
+import { Volume } from "../../docs/docs";
+import { CreateVolumeOptions } from "../containers/templates/assets/volumes/docs";
 import DockerSocket from "./../socket/DockerSocket";
 import StackVolume from "../containers/templates/assets/volumes/StackVolume";
 

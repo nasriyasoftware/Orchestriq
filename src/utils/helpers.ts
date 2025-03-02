@@ -106,7 +106,7 @@ class Helpers {
      * This function listens for data, end, and error events on Node.js streams. For web streams, it uses an async iterator
      * to read the stream. The resulting data chunks are collected into a buffer.
      */
-    async streamToBuffer(stream: ReadableStream<any> | Readable): Promise<Buffer> {
+    async streamToBuffer(stream: ReadableStream<any> | Readable | AsyncIterable<Uint8Array | string>): Promise<Buffer> {
         const chunks: Buffer[] = [];
 
         if (stream instanceof Readable) {
@@ -123,12 +123,37 @@ class Helpers {
                     reject(err); // Reject the promise if there's an error
                 });
             });
-        } else {
-            for await (const chunk of stream) {
-                chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+        }
+
+        // Handle Web ReadableStream
+        if (stream instanceof ReadableStream) {
+            const reader = stream.getReader();
+            try {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    chunks.push(Buffer.from(value));
+                }
+            } finally {
+                reader.releaseLock();
             }
             return Buffer.concat(chunks);
         }
+
+        // Handle Async Iterable Streams (e.g., custom implementations)
+        for await (const chunk of stream) {
+            if (typeof chunk === 'string') {
+                chunks.push(Buffer.from(chunk, 'utf-8')); // Explicitly define encoding for strings
+            } else if (chunk instanceof Uint8Array) {
+                chunks.push(Buffer.from(chunk)); // Directly use Uint8Array
+            } else if (Buffer.isBuffer(chunk)) {
+                chunks.push(chunk);
+            } else {
+                throw new TypeError(`Unexpected chunk type: ${typeof chunk}`);
+            }
+        }
+
+        return Buffer.concat(chunks);
     }
 
     addRegistryAuthHeader(reqOptions: Record<string, any>, auth: RegistryAuth, serveraddress: string = 'https://index.docker.io/v1') {

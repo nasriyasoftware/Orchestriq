@@ -7,6 +7,7 @@ import fs from "fs";
 import helpers from "../../utils/helpers";
 import { Readable } from "stream";
 import tarball from "../../utils/Tarball";
+import { BindVolume, NamedVolume } from "./templates/assets/services/assets/docs";
 
 class ContainersManager {
     #_containers: ContainerTemplate[] = [];
@@ -155,14 +156,14 @@ class ContainersManager {
                         }
 
                         if (namedVolumes.length > 0 || bindMounts.length > 0) {
-                            if (!('HostConfig' in requestBody)) { requestBody.HostConfig = {}; }
-                            if (!('Binds' in requestBody.HostConfig)) { requestBody.HostConfig.Binds = []; }
+                            if (!helpers.hasOwnProperty(requestBody, 'HostConfig')) { requestBody.HostConfig = {}; }
+                            if (!helpers.hasOwnProperty(requestBody.HostConfig, 'Binds')) { requestBody.HostConfig.Binds = []; }
 
-                            for (const volume of namedVolumes) {
+                            for (const volume of namedVolumes as NamedVolume[]) {
                                 requestBody.HostConfig.Binds.push(`${volume.name}:${volume.containerPath}`);
                             }
 
-                            for (const volume of bindMounts) {
+                            for (const volume of bindMounts as BindVolume[]) {
                                 requestBody.HostConfig.Binds.push(`${volume.hostPath}:${volume.containerPath}`);
                             }
                         }
