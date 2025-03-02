@@ -1,3 +1,4 @@
+import helpers from "../../../../../../utils/helpers";
 import { HealthcheckData } from "./docs";
 
 /**
@@ -66,29 +67,29 @@ class Healthcheck {
             throw new Error("The 'healthcheck' value must be an object.");
         }
 
-        if ('test' in value) { this.test = value.test } else { throw new Error("The 'test' property is required."); }
+        if (helpers.hasOwnProperty(value, 'test')) { this.test = value.test } else { throw new Error("The 'test' property is required."); }
 
-        if ('interval' in value) {
+        if (helpers.hasOwnProperty(value, 'interval')) {
             if (typeof value.interval !== 'string') { throw new TypeError("The 'interval' property must be a string (e.g., '30s')."); }
             this.interval = value.interval;
         }
 
-        if ('retries' in value) {
+        if (helpers.hasOwnProperty(value, 'retries')) {
             if (typeof value.retries !== 'number') { throw new TypeError("The 'retries' property must be a number."); }
             this.retries = value.retries;
         }
 
-        if ('start_period' in value) {
+        if (helpers.hasOwnProperty(value, 'start_period')) {
             if (typeof value.start_period !== 'string') { throw new TypeError("The 'start_period' property must be a string (e.g., '0s')."); }
             this.start_period = value.start_period;
         }
 
-        if ('timeout' in value) {
+        if (helpers.hasOwnProperty(value, 'timeout')) {
             if (typeof value.timeout !== 'string') { throw new TypeError("The 'timeout' property must be a string (e.g., '10s')."); }
             this.timeout = value.timeout;
         }
 
-        if ('disable' in value) {
+        if (helpers.hasOwnProperty(value, 'disable')) {
             if (typeof value.disable !== 'boolean') { throw new TypeError("The 'disable' property must be a boolean."); }
             this.disable = value.disable;
         }

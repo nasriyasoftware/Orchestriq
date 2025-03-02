@@ -16,7 +16,7 @@ class StackConfigs {
         validateConfig: (value: StackConfigsData) => {
             if (!(typeof value === 'object' && Object.keys(value).length > 0)) { throw new TypeError("The container's 'configs' property must be a non-empty object."); }
 
-            if ('name' in value) {
+            if (helpers.hasOwnProperty(value, 'name')) {
                 if (typeof value.name !== 'string') { throw new TypeError("The container's 'configs.name' property must be a string."); }
                 if (value.name.length === 0) { throw new SyntaxError("The container's 'configs.name' property must be defined."); }
                 if (value.name in this.#_configs) { throw new SyntaxError(`The container's 'configs.name' property must be unique, but '${value.name}' is already defined.`); }
@@ -24,7 +24,7 @@ class StackConfigs {
                 throw new SyntaxError("The container's 'configs.name' property must be defined.");
             }
 
-            if ('filePath' in value) {
+            if (helpers.hasOwnProperty(value, 'filePath')) {
                 if (typeof value.filePath !== 'string') { throw new TypeError("The container's 'configs.filePath' property must be a string."); }
                 if (value.filePath.length === 0) { throw new SyntaxError("The container's 'configs.filePath' property must be defined."); }
                 if (!fs.existsSync(value.filePath)) { throw new SyntaxError(`The container's 'configs.filePath' property must be a valid path, but '${value.filePath}' does not exist.`); }

@@ -2,6 +2,7 @@ import os from 'os';
 import fs from 'fs';
 import undici from 'undici';
 import { BasicAuth, BearerAuth, DockerOptions, SocketConfig } from "../../docs/docs";
+import helpers from '../../utils/helpers';
 
 const isWindows = os.platform() === 'win32';
 
@@ -140,7 +141,7 @@ class DockerSocket {
                 url.password = encodeURIComponent(options.credentials.password);
             }
 
-            if ('authentication' in options) {
+            if (helpers.hasOwnProperty(options, 'authentication')) {
                 this.#_helpers.validateAuthOptions(options.authentication);
                 if (options?.authentication !== 'none') {
                     authentication = options.authentication;
@@ -150,14 +151,14 @@ class DockerSocket {
             const baseOptions = { url, authentication, headers: baseHeaders }
             switch (options.hostType) {
                 case 'network': {
-                    if ('protocol' in options) {
+                    if (helpers.hasOwnProperty(options, 'protocol')) {
                         if (options.protocol !== 'http' && options.protocol !== 'https' && options.protocol !== 'tcp') { throw new Error(`The 'protocol' option for a 'network' host must be one of 'http', 'https' or 'tcp'.`); }
                         url.protocol = options.protocol;
                     } else {
                         url.protocol = 'tcp';
                     }
 
-                    if ('port' in options) {
+                    if (helpers.hasOwnProperty(options, 'port')) {
                         if (typeof options.port !== 'number') { throw new Error(`The 'port' option for a 'network' host must be a number.`); }
                         url.port = options.port.toString();
                     } else {
@@ -169,14 +170,14 @@ class DockerSocket {
                 }
 
                 case 'remote': {
-                    if ('protocol' in options) {
+                    if (helpers.hasOwnProperty(options, 'protocol')) {
                         if (options.protocol !== 'https') { throw new Error(`The 'protocol' option for a 'remote' host must always a secure connection ('https').`); }
                         url.protocol = 'https';
                     } else {
                         url.protocol = 'https';
                     }
 
-                    if ('port' in options) {
+                    if (helpers.hasOwnProperty(options, 'port')) {
                         if (typeof options.port !== 'number') { throw new Error(`The 'port' option for a 'remote' host must be a number.`); }
                         url.port = options.port.toString();
                     }

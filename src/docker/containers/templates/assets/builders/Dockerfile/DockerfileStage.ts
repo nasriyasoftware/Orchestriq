@@ -314,14 +314,14 @@ class DockerfileStage {
         for (const arg of args) {
             if (!helpers.isObject(arg)) { throw new Error('Arguments must be objects.'); }
 
-            if ('name' in arg) {
+            if (helpers.hasOwnProperty(arg, 'name')) {
                 if (typeof arg.name !== 'string') { throw new Error('Argument name must be a string.'); }
                 if (arg.name.length === 0) { throw new Error('Argument name must not be empty.'); }
             } else {
                 throw new Error('Arguments must have a name.');
             }
 
-            if ('value' in arg) {
+            if (helpers.hasOwnProperty(arg, 'value')) {
                 if (typeof arg.value !== 'string') { throw new Error('Argument value must be a string.'); }
                 const types = ['string', 'number', 'boolean'];
                 if (!types.includes(typeof arg.value)) { throw new Error('Argument value must be a string, number, or boolean.'); }
@@ -329,7 +329,7 @@ class DockerfileStage {
                 throw new Error('Arguments must have a value.');
             }
 
-            if ('global' in arg) {
+            if (helpers.hasOwnProperty(arg, 'global')) {
                 if (typeof arg.global !== 'boolean') { throw new Error('Argument global must be a boolean.'); }
             } else {
                 arg.global = false;

@@ -134,19 +134,19 @@ class Helpers {
     addRegistryAuthHeader(reqOptions: Record<string, any>, auth: RegistryAuth, serveraddress: string = 'https://index.docker.io/v1') {
         const authConfig: RegistryAuth = { username: auth.username, password: auth.password };
 
-        if ('username' in auth) {
+        if (this.hasOwnProperty(auth, 'username')) {
             if (typeof auth.username !== 'string' || auth.username.length === 0) { throw new TypeError(`The "username" option (when provided) must be a non-empty string.`); }
         } else {
             throw new TypeError(`The registry "authorization" option (when provided) must contain a "username" property.`);
         }
 
-        if ('password' in auth) {
+        if (this.hasOwnProperty(auth, 'password')) {
             if (typeof auth.password !== 'string' || auth.password.length === 0) { throw new TypeError(`The "password" option (when provided) must be a non-empty string.`); }
         } else {
             throw new TypeError(`The registry "authorization" option (when provided) must contain a "password" property.`);
         }
 
-        if ('email' in auth) {
+        if (this.hasOwnProperty(auth, 'email')) {
             if (typeof auth.email !== 'string' || auth.email.length === 0) { throw new TypeError(`The registry "email" option (when provided) must be a non-empty string.`); }
             if (!this.isValidEmail(auth.email)) { throw new TypeError(`The registry "email" you provided (${auth.email}) must be a valid email address.`); }
             authConfig.email = auth.email;

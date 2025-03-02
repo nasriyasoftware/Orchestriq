@@ -362,7 +362,7 @@ class Service {
             if (value.policy === 'on-failure') {
                 const fPolicy: FailureRestartOption = { policy: 'on-failure', times: 5 };
 
-                if ('times' in value) {
+                if ('times' in value && helpers.hasOwnProperty(value, 'times')) {
                     if (typeof value.times !== 'number') { throw new TypeError('Restart times must be a number.'); }
                     if (value.times < 1 || value.times > 10) { throw new TypeError('Restart times must be between 1 and 10.'); }
                     fPolicy.times = value.times;
@@ -403,7 +403,7 @@ class Service {
         switch (value.driver) {
             case 'json-file': {
                 // Handle 'json-file' driver
-                if ('options' in value) {
+                if (helpers.hasOwnProperty(value, 'options')) {
                     const options = value.options;
                     if (!(options && typeof options === 'object')) { throw new TypeError('Logging options must be an object when defined.'); }
 
@@ -449,7 +449,7 @@ class Service {
             }
             case 'syslog': {
                 // Handle 'syslog' driver
-                if ('options' in value) {
+                if (helpers.hasOwnProperty(value, 'options')) {
                     const options = value.options;
                     if (!(options && typeof options === 'object')) { throw new TypeError('Logging options must be an object when defined.'); }
 
@@ -488,7 +488,7 @@ class Service {
             }
             case 'journald': {
                 // Handle 'journald' driver
-                if ('options' in value) {
+                if (helpers.hasOwnProperty(value, 'options')) {
                     const options = value.options;
                     if (!(options && typeof options === 'object')) { throw new TypeError('Logging options must be an object when defined.'); }
 
@@ -506,7 +506,7 @@ class Service {
             }
             case 'gelf': {
                 // Handle 'gelf' driver
-                if ('options' in value) {
+                if (helpers.hasOwnProperty(value, 'options')) {
                     const options = value.options;
                     if (!(options && typeof options === 'object')) { throw new TypeError('Logging options must be an object when defined.'); }
 
@@ -533,7 +533,7 @@ class Service {
             }
             case 'fluentd': {
                 // Handle 'fluentd' driver
-                if ('options' in value) {
+                if (helpers.hasOwnProperty(value, 'options')) {
                     const options = value.options;
                     if (!(options && typeof options === 'object')) { throw new TypeError('Logging options must be an object when defined.'); }
 
@@ -561,7 +561,7 @@ class Service {
             }
             case 'awslogs': {
                 // Handle 'awslogs' driver
-                if ('options' in value) {
+                if (helpers.hasOwnProperty(value, 'options')) {
                     const options = value.options;
                     if (!(options && typeof options === 'object')) { throw new TypeError('Logging options must be an object when defined.'); }
 
@@ -599,7 +599,7 @@ class Service {
             }
             case 'splunk': {
                 // Handle 'splunk' driver
-                if ('options' in value) {
+                if (helpers.hasOwnProperty(value, 'options')) {
                     const options = value.options;
                     if (!(options && typeof options === 'object')) { throw new TypeError('Logging options must be an object when defined.'); }
 
@@ -641,7 +641,7 @@ class Service {
             }
             case 'logentries': {
                 // Handle 'logentries' driver
-                if ('options' in value) {
+                if (helpers.hasOwnProperty(value, 'options')) {
                     const options = value.options;
                     if (!(options && typeof options === 'object')) { throw new TypeError('Logging options must be an object when defined.'); }
 
@@ -659,7 +659,7 @@ class Service {
             }
             case 'local': {
                 // Handle 'local' driver
-                if ('options' in value) {
+                if (helpers.hasOwnProperty(value, 'options')) {
                     const options = value.options;
                     if (!(options && typeof options === 'object')) { throw new TypeError('Logging options must be an object when defined.'); }
 
@@ -677,7 +677,7 @@ class Service {
             }
             case 'etwlogs': {
                 // Handle 'etwlogs' driver
-                if ('options' in value) {
+                if (helpers.hasOwnProperty(value, 'options')) {
                     const options = value.options;
                     if (!(options && typeof options === 'object')) { throw new TypeError('Logging options must be an object when defined.'); }
 
@@ -689,7 +689,7 @@ class Service {
             }
             case 'gcplogs': {
                 // Handle 'gcplogs' driver
-                if ('options' in value) {
+                if (helpers.hasOwnProperty(value, 'options')) {
                     const options = value.options;
                     if (!(options && typeof options === 'object')) { throw new TypeError('Logging options must be an object when defined.'); }
 
@@ -712,7 +712,7 @@ class Service {
             }
             case 'papertrail': {
                 // Handle 'papertrail' driver
-                if ('options' in value) {
+                if (helpers.hasOwnProperty(value, 'options')) {
                     const options = value.options;
                     if (!(options && typeof options === 'object')) { throw new TypeError('Logging options must be an object when defined.'); }
 
@@ -735,7 +735,7 @@ class Service {
             }
             case 'logstash': {
                 // Handle 'logstash' driver
-                if ('options' in value) {
+                if (helpers.hasOwnProperty(value, 'options')) {
                     const options = value.options;
                     if (!(options && typeof options === 'object')) { throw new TypeError('Logging options must be an object when defined.'); }
 
@@ -758,7 +758,7 @@ class Service {
             }
             case 'datadog': {
                 // Handle 'datadog' driver
-                if ('options' in value) {
+                if (helpers.hasOwnProperty(value, 'options')) {
                     const options = value.options;
                     if (!(options && typeof options === 'object')) { throw new TypeError('Logging options must be an object when defined.'); }
 
@@ -781,7 +781,7 @@ class Service {
             }
             case 'stackdriver': {
                 // Handle 'stackdriver' driver
-                if ('options' in value) {
+                if (helpers.hasOwnProperty(value, 'options')) {
                     const options = value.options;
                     if (!(options && typeof options === 'object')) { throw new TypeError('Logging options must be an object when defined.'); }
 
@@ -799,7 +799,7 @@ class Service {
             }
             case 'azurelog': {
                 // Handle 'azurelog' driver
-                if ('options' in value) {
+                if (helpers.hasOwnProperty(value, 'options')) {
                     const options = value.options;
                     if (!(options && typeof options === 'object')) { throw new TypeError('Logging options must be an object when defined.'); }
 
@@ -817,7 +817,7 @@ class Service {
             }
             case 'kafka': {
                 // Handle 'kafka' driver
-                if ('options' in value) {
+                if (helpers.hasOwnProperty(value, 'options')) {
                     const options = value.options;
                     if (!(options && typeof options === 'object')) { throw new TypeError('Logging options must be an object when defined.'); }
 
@@ -887,7 +887,7 @@ class Service {
             for (const config of value) {
                 if (!(typeof config === 'object' && Object.keys(config).length > 0)) { throw new TypeError('Configs must be a non-empty object.'); }
 
-                if ('source' in config) {
+                if (helpers.hasOwnProperty(config, 'source')) {
                     if (typeof config.source !== 'string') { throw new TypeError('Config source must be a string.'); }
                     if (config.source.length === 0) { throw new SyntaxError('Config source must be defined.'); }
                     if (!(config.source in this.#_container.configs.list)) { throw new Error(`Config source '${config.source}' is not defined in the container's configs.`); }
@@ -895,14 +895,14 @@ class Service {
                     throw new SyntaxError('Config source must be defined.');
                 }
 
-                if ('target' in config) {
+                if (helpers.hasOwnProperty(config, 'target')) {
                     if (typeof config.target !== 'string') { throw new TypeError('Config target must be a string.'); }
                     if (config.target.length === 0) { throw new SyntaxError('Config target must be defined.'); }
                 } else {
                     throw new SyntaxError('Config target must be defined.');
                 }
 
-                if ('mode' in config) {
+                if (helpers.hasOwnProperty(config, 'mode')) {
                     if (!(typeof config.mode === 'object' && Object.keys(config.mode).length > 0)) { throw new TypeError('Config mode must be a non-empty object.'); }
 
 
@@ -1000,7 +1000,7 @@ class Service {
             for (const volume of value) {
                 if (!(typeof volume === 'object' && Object.keys(volume).length > 0)) { throw new TypeError('Volumes must be a "ServiceVolume" or a list of "ServiceVolume".'); }
 
-                if ('containerPath' in volume) {
+                if (helpers.hasOwnProperty(volume, 'containerPath')) {
                     if (typeof volume.containerPath !== 'string') { throw new TypeError('Volume containerPath must be a string.'); }
                     if (volume.containerPath.length === 0) { throw new SyntaxError('Volume containerPath must be defined.'); }
                     if (!PATH_REGEX.test(volume.containerPath)) { throw new SyntaxError('Volume containerPath must be a valid path.'); }
@@ -1008,11 +1008,11 @@ class Service {
                     throw new SyntaxError('Volume containerPath must be defined.');
                 }
 
-                if ('read_only' in volume) {
+                if (helpers.hasOwnProperty(volume, 'read_only')) {
                     if (typeof volume.read_only !== 'boolean') { throw new TypeError('Volume read_only (when provided) must be a boolean.'); }
                 }
 
-                if ('name' in volume) {                    
+                if ('name' in volume && helpers.hasOwnProperty(volume, 'name')) {
                     if (typeof volume.name !== 'string') { throw new TypeError('Volume name (when provided) must be a string.'); }
                     if (volume.name.length === 0) { throw new SyntaxError('Volume name cannot be empty.'); }
                     if (!(volume.name in this.#_container.volumes.list)) { throw new Error(`Volume name '${volume.name}' is not defined in the container's volumes.`); }
@@ -1020,7 +1020,7 @@ class Service {
                     continue;
                 }
 
-                if ('hostPath' in volume) {
+                if ('hostPath' in volume && helpers.hasOwnProperty(volume, 'hostPath')) {
                     if (typeof volume.hostPath !== 'string') { throw new TypeError('Volume hostPath (when defined) must be a string.'); }
                     if (volume.hostPath.length === 0) { throw new SyntaxError('Volume hostPath cannot be empty.'); }
                     if (!PATH_REGEX.test(volume.hostPath)) { throw new SyntaxError('Volume hostPath must be a valid path.'); }
@@ -1106,13 +1106,13 @@ class Service {
             for (const link of value) {
                 if (!(typeof link === 'object' && Object.keys(link).length > 1)) { throw new TypeError('External links must be an object of key-value pairs.') }
 
-                if ('externalContainerName' in link) {
+                if (helpers.hasOwnProperty(link, 'externalContainerName')) {
                     if (typeof link.externalContainerName !== 'string') { throw new TypeError(`External links must have an "externalContainerName" property that is a string, instead got ${typeof link.externalContainerName}.`) }
                 } else {
                     throw new Error('External links must have an "externalContainerName" property.');
                 }
 
-                if ('internalContainerName' in link) {
+                if (helpers.hasOwnProperty(link, 'internalContainerName')) {
                     if (typeof link.internalContainerName !== 'string') { throw new TypeError(`External links must have an "internalContainerName" property as a string, instead got ${typeof link.internalContainerName}.`) }
                 } else {
                     link.internalContainerName = link.externalContainerName;

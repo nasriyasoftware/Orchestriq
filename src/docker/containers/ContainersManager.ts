@@ -207,7 +207,7 @@ class ContainersManager {
                     returnJSON: false,
                 }
 
-                if ('name' in container) {
+                if (helpers.hasOwnProperty(container, 'name')) {
                     if (typeof container.name !== 'string') { throw new Error('The container name must be a string.'); }
                     if (container.name.length === 0) { throw new Error('The container name must be defined.'); }
                     params.set('name', container.name);
@@ -304,37 +304,37 @@ class ContainersManager {
             if (!('stdout' in options || 'stderr' in options)) { throw new Error('At least one of the "stdout" or "stderr" options must be provided.'); }
 
             const params = new URLSearchParams();
-            if ('stdout' in options) {
+            if (helpers.hasOwnProperty(options, 'stdout')) {
                 if (typeof options.stdout !== 'boolean') { throw new Error('The "stdout" option must be a boolean.'); }
                 if (options.stdout) { params.set('stdout', 'true'); }
             }
 
-            if ('stderr' in options) {
+            if (helpers.hasOwnProperty(options, 'stderr')) {
                 if (typeof options.stderr !== 'boolean') { throw new Error('The "stderr" option must be a boolean.'); }
                 if (options.stderr) { params.set('stderr', 'true'); }
             }
 
-            if ('since' in options) {
+            if (helpers.hasOwnProperty(options, 'since')) {
                 if (!(options.since instanceof Date)) { throw new Error('The "since" option must be a Date object.'); }
                 params.set('since', (Math.floor(options.since.getTime() / 1000)).toString());
             }
 
-            if ('until' in options) {
+            if (helpers.hasOwnProperty(options, 'until')) {
                 if (!(options.until instanceof Date)) { throw new Error('The "until" option must be a Date object.'); }
                 params.set('until', (Math.floor(options.until.getTime() / 1000)).toString());
             }
 
-            if ('follow' in options) {
+            if (helpers.hasOwnProperty(options, 'follow')) {
                 if (typeof options.follow !== 'boolean') { throw new Error('The "follow" option must be a boolean.'); }
                 if (options.follow) { params.set('follow', 'true'); }
             }
 
-            if ('timestamps' in options) {
+            if (helpers.hasOwnProperty(options, 'timestamps')) {
                 if (typeof options.timestamps !== 'boolean') { throw new Error('The "timestamps" option must be a boolean.'); }
                 if (options.timestamps) { params.set('timestamps', 'true'); }
             }
 
-            if ('tail' in options) {
+            if (helpers.hasOwnProperty(options, 'tail')) {
                 if (!['number', 'string'].includes(typeof options.tail)) { throw new Error('The "tail" option must be a number or a string.'); }
                 if (typeof options.tail === 'number') { options.tail = String(options.tail) }
                 params.set('tail', options.tail as string);
@@ -440,12 +440,12 @@ class ContainersManager {
 
         try {
             const params = new URLSearchParams();
-            if ('stream' in options) {
+            if (helpers.hasOwnProperty(options, 'stream')) {
                 if (typeof options.stream !== 'boolean') { throw new Error('The "stream" option must be a boolean.'); }
                 params.set('stream', options.stream.toString());
             }
 
-            if ('oneShot' in options) {
+            if (helpers.hasOwnProperty(options, 'oneShot')) {
                 if (typeof options.oneShot !== 'boolean') { throw new Error('The "oneShot" option must be a boolean.'); }
                 params.set('one-shot', options.oneShot.toString());
             }
@@ -598,67 +598,67 @@ class ContainersManager {
             const requestBody: ContainerUpdateOptions = {};
             // validate the request options
             {
-                if ('CpuShares' in options) {
+                if (helpers.hasOwnProperty(options, 'CpuShares')) {
                     if (typeof options.CpuShares !== 'number') { throw new TypeError(`The "CpuShares" (when provided) option must be a number, instead got ${typeof options.CpuShares}`); }
                     requestBody.CpuShares = options.CpuShares;
                 }
 
-                if ('CpuPeriod' in options) {
+                if (helpers.hasOwnProperty(options, 'CpuPeriod')) {
                     if (typeof options.CpuPeriod !== 'number') { throw new TypeError(`The "CpuPeriod" (when provided) option must be a number, instead got ${typeof options.CpuPeriod}`); }
                     requestBody.CpuPeriod = options.CpuPeriod;
                 }
 
-                if ('CpuQuota' in options) {
+                if (helpers.hasOwnProperty(options, 'CpuQuota')) {
                     if (typeof options.CpuQuota !== 'number') { throw new TypeError(`The "CpuQuota" (when provided) option must be a number, instead got ${typeof options.CpuQuota}`); }
                     requestBody.CpuQuota = options.CpuQuota;
                 }
 
-                if ('CpuRealtimePeriod' in options) {
+                if (helpers.hasOwnProperty(options, 'CpuRealtimePeriod')) {
                     if (typeof options.CpuRealtimePeriod !== 'number') { throw new TypeError(`The "CpuRealtimePeriod" (when provided) option must be a number, instead got ${typeof options.CpuRealtimePeriod}`); }
                     requestBody.CpuRealtimePeriod = options.CpuRealtimePeriod;
                 }
 
-                if ('CpuRealtimeRuntime' in options) {
+                if (helpers.hasOwnProperty(options, 'CpuRealtimeRuntime')) {
                     if (typeof options.CpuRealtimeRuntime !== 'number') { throw new TypeError(`The "CpuRealtimeRuntime" (when provided) option must be a number, instead got ${typeof options.CpuRealtimeRuntime}`); }
                     requestBody.CpuRealtimeRuntime = options.CpuRealtimeRuntime;
                 }
 
-                if ('NanoCpus' in options) {
+                if (helpers.hasOwnProperty(options, 'NanoCpus')) {
                     if (typeof options.NanoCpus !== 'number') { throw new TypeError(`The "NanoCpus" (when provided) option must be a number, instead got ${typeof options.NanoCpus}`); }
                     requestBody.NanoCpus = options.NanoCpus;
                 }
 
-                if ('Memory' in options) {
+                if (helpers.hasOwnProperty(options, 'Memory')) {
                     if (typeof options.Memory !== 'number') { throw new TypeError(`The "Memory" (when provided) option must be a number, instead got ${typeof options.Memory}`); }
                     requestBody.Memory = options.Memory;
                 }
 
-                if ('MemoryReservation' in options) {
+                if (helpers.hasOwnProperty(options, 'MemoryReservation')) {
                     if (typeof options.MemoryReservation !== 'number') { throw new TypeError(`The "MemoryReservation" (when provided) option must be a number, instead got ${typeof options.MemoryReservation}`); }
                     requestBody.MemoryReservation = options.MemoryReservation;
                 }
 
-                if ('MemorySwap' in options) {
+                if (helpers.hasOwnProperty(options, 'MemorySwap')) {
                     if (typeof options.MemorySwap !== 'number') { throw new TypeError(`The "MemorySwap" (when provided) option must be a number, instead got ${typeof options.MemorySwap}`); }
                     requestBody.MemorySwap = options.MemorySwap;
                 }
 
-                if ('KernelMemory' in options) {
+                if (helpers.hasOwnProperty(options, 'KernelMemory')) {
                     if (typeof options.KernelMemory !== 'number') { throw new TypeError(`The "KernelMemory" (when provided) option must be a number, instead got ${typeof options.KernelMemory}`); }
                     requestBody.KernelMemory = options.KernelMemory;
                 }
 
-                if ('PidsLimit' in options) {
+                if (helpers.hasOwnProperty(options, 'PidsLimit')) {
                     if (typeof options.PidsLimit !== 'number') { throw new TypeError(`The "PidsLimit" (when provided) option must be a number, instead got ${typeof options.PidsLimit}`); }
                     requestBody.PidsLimit = options.PidsLimit;
                 }
 
-                if ('BlkioWeight' in options) {
+                if (helpers.hasOwnProperty(options, 'BlkioWeight')) {
                     if (typeof options.BlkioWeight !== 'number') { throw new TypeError(`The "BlkioWeight" (when provided) option must be a number, instead got ${typeof options.BlkioWeight}`); }
                     requestBody.BlkioWeight = options.BlkioWeight;
                 }
 
-                if ('BlkioWeightDevice' in options) {
+                if (helpers.hasOwnProperty(options, 'BlkioWeightDevice')) {
                     if (!Array.isArray(options.BlkioWeightDevice)) { throw new TypeError(`The "BlkioWeightDevice" (when provided) option must be an array, instead got ${typeof options.BlkioWeightDevice}`); }
                     for (const item of options.BlkioWeightDevice) {
                         if (!helpers.isObject(item)) { throw new TypeError(`The "BlkioWeightDevice" array must contain objects, instead one of them was ${typeof item}`); }
@@ -673,7 +673,7 @@ class ContainersManager {
                     requestBody.BlkioWeightDevice = options.BlkioWeightDevice;
                 }
 
-                if ('BlkioDeviceReadBps' in options) {
+                if (helpers.hasOwnProperty(options, 'BlkioDeviceReadBps')) {
                     if (!Array.isArray(options.BlkioDeviceReadBps)) { throw new TypeError(`The "BlkioDeviceReadBps" (when provided) option must be an array, instead got ${typeof options.BlkioDeviceReadBps}`); }
                     for (const item of options.BlkioDeviceReadBps) {
                         if (!helpers.isObject(item)) { throw new TypeError(`The "BlkioDeviceReadBps" array must contain objects, instead one of them was ${typeof item}`); }
@@ -688,7 +688,7 @@ class ContainersManager {
                     requestBody.BlkioDeviceReadBps = options.BlkioDeviceReadBps;
                 }
 
-                if ('BlkioDeviceWriteBps' in options) {
+                if (helpers.hasOwnProperty(options, 'BlkioDeviceWriteBps')) {
                     if (!Array.isArray(options.BlkioDeviceWriteBps)) { throw new TypeError(`The "BlkioDeviceWriteBps" (when provided) option must be an array, instead got ${typeof options.BlkioDeviceWriteBps}`); }
                     for (const item of options.BlkioDeviceWriteBps) {
                         if (!helpers.isObject(item)) { throw new TypeError(`The "BlkioDeviceWriteBps" array must contain objects, instead one of them was ${typeof item}`); }
@@ -703,7 +703,7 @@ class ContainersManager {
                     requestBody.BlkioDeviceWriteBps = options.BlkioDeviceWriteBps;
                 }
 
-                if ('BlkioDeviceReadIOps' in options) {
+                if (helpers.hasOwnProperty(options, 'BlkioDeviceReadIOps')) {
                     if (!Array.isArray(options.BlkioDeviceReadIOps)) { throw new TypeError(`The "BlkioDeviceReadIOps" (when provided) option must be an array, instead got ${typeof options.BlkioDeviceReadIOps}`); }
                     for (const item of options.BlkioDeviceReadIOps) {
                         if (!helpers.isObject(item)) { throw new TypeError(`The "BlkioDeviceReadIOps" array must contain objects, instead one of them was ${typeof item}`); }
@@ -718,7 +718,7 @@ class ContainersManager {
                     requestBody.BlkioDeviceReadIOps = options.BlkioDeviceReadIOps;
                 }
 
-                if ('BlkioDeviceWriteIOps' in options) {
+                if (helpers.hasOwnProperty(options, 'BlkioDeviceWriteIOps')) {
                     if (!Array.isArray(options.BlkioDeviceWriteIOps)) { throw new TypeError(`The "BlkioDeviceWriteIOps" (when provided) option must be an array, instead got ${typeof options.BlkioDeviceWriteIOps}`); }
                     for (const item of options.BlkioDeviceWriteIOps) {
                         if (!helpers.isObject(item)) { throw new TypeError(`The "BlkioDeviceWriteIOps" array must contain objects, instead one of them was ${typeof item}`); }
@@ -733,58 +733,58 @@ class ContainersManager {
                     requestBody.BlkioDeviceWriteIOps = options.BlkioDeviceWriteIOps;
                 }
 
-                if ('CpusetCpus' in options) {
+                if (helpers.hasOwnProperty(options, 'CpusetCpus')) {
                     if (typeof options.CpusetCpus !== 'string') { throw new TypeError(`The "CpusetCpus" (when provided) option must be a string, instead got ${typeof options.CpusetCpus}`); }
                     requestBody.CpusetCpus = options.CpusetCpus;
                 }
 
-                if ('CpusetMems' in options) {
+                if (helpers.hasOwnProperty(options, 'CpusetMems')) {
                     if (typeof options.CpusetMems !== 'string') { throw new TypeError(`The "CpusetMems" (when provided) option must be a string, instead got ${typeof options.CpusetMems}`); }
                     requestBody.CpusetMems = options.CpusetMems;
                 }
 
-                if ('OomKillDisable' in options) {
+                if (helpers.hasOwnProperty(options, 'OomKillDisable')) {
                     if (typeof options.OomKillDisable !== 'boolean') { throw new TypeError(`The "OomKillDisable" (when provided) option must be a boolean, instead got ${typeof options.OomKillDisable}`); }
                     requestBody.OomKillDisable = options.OomKillDisable;
                 }
 
-                if ('OomScoreAdj' in options) {
+                if (helpers.hasOwnProperty(options, 'OomScoreAdj')) {
                     if (typeof options.OomScoreAdj !== 'number') { throw new TypeError(`The "OomScoreAdj" (when provided) option must be a number, instead got ${typeof options.OomScoreAdj}`); }
                     requestBody.OomScoreAdj = options.OomScoreAdj;
                 }
 
-                if ('CpuRtPeriod' in options) {
+                if (helpers.hasOwnProperty(options, 'CpuRtPeriod')) {
                     if (typeof options.CpuRtPeriod !== 'number') { throw new TypeError(`The "CpuRtPeriod" (when provided) option must be a number, instead got ${typeof options.CpuRtPeriod}`); }
                     requestBody.CpuRtPeriod = options.CpuRtPeriod;
                 }
 
-                if ('CpuRtRuntime' in options) {
+                if (helpers.hasOwnProperty(options, 'CpuRtRuntime')) {
                     if (typeof options.CpuRtRuntime !== 'number') { throw new TypeError(`The "CpuRtRuntime" (when provided) option must be a number, instead got ${typeof options.CpuRtRuntime}`); }
                     requestBody.CpuRtRuntime = options.CpuRtRuntime;
                 }
 
-                if ('Swappiness' in options) {
+                if (helpers.hasOwnProperty(options, 'Swappiness')) {
                     if (typeof options.Swappiness !== 'number') { throw new TypeError(`The "Swappiness" (when provided) option must be a number, instead got ${typeof options.Swappiness}`); }
                     requestBody.Swappiness = options.Swappiness;
                 }
 
-                if ('AllowOomMemoryDump' in options) {
+                if (helpers.hasOwnProperty(options, 'AllowOomMemoryDump')) {
                     if (typeof options.AllowOomMemoryDump !== 'boolean') { throw new TypeError(`The "AllowOomMemoryDump" (when provided) option must be a boolean, instead got ${typeof options.AllowOomMemoryDump}`); }
                     requestBody.AllowOomMemoryDump = options.AllowOomMemoryDump;
                 }
 
-                if ('RestartPolicy' in options) {
+                if (helpers.hasOwnProperty(options, 'RestartPolicy')) {
                     const policy = options.RestartPolicy;
                     if (!policy || !helpers.isObject(policy)) { throw new TypeError(`The "RestartPolicy" (when provided) option must be an object, instead got ${typeof policy}`); }
 
-                    if ('Name' in policy) {
+                    if (helpers.hasOwnProperty(policy, 'Name')) {
                         if (typeof policy.Name !== 'string') { throw new TypeError(`The "Name" property of the "RestartPolicy" object must be a string, instead got ${typeof policy.Name}`); }
                         if (!['no', 'always', 'unless-stopped', 'on-failure'].includes(policy.Name)) { throw new Error(`The "Name" property of the "RestartPolicy" object must be one of "no", "always", "unless-stopped", or "on-failure".`); }
                     } else {
                         throw new SyntaxError(`The "RestartPolicy" object must have a "Name" property.`);
                     }
 
-                    if ('MaximumRetryCount' in policy) {
+                    if (helpers.hasOwnProperty(policy, 'MaximumRetryCount')) {
                         if (typeof policy.MaximumRetryCount !== 'number') { throw new TypeError(`The "MaximumRetryCount" property of the "RestartPolicy" object must be a number, instead got ${typeof policy.MaximumRetryCount}`); }
                         if (policy.MaximumRetryCount < 0) { throw new RangeError(`The "MaximumRetryCount" property of the "RestartPolicy" object must be a positive number.`); }
                     }
@@ -792,18 +792,18 @@ class ContainersManager {
                     requestBody.RestartPolicy = policy;
                 }
 
-                if ('HugePagesLimits' in options) {
+                if (helpers.hasOwnProperty(options, 'HugePagesLimits')) {
                     if (!Array.isArray(options.HugePagesLimits)) { throw new TypeError(`The "HugePagesLimits" (when provided) option must be an array, instead got ${typeof options.HugePagesLimits}`); }
                     for (const limit of options.HugePagesLimits) {
                         if (!helpers.isObject(limit)) { throw new TypeError(`The "HugePagesLimits" option must be an array of objects but one of the objects is not an object, instead got ${typeof limit}`); }
 
-                        if ('PageSize' in limit) {
+                        if (helpers.hasOwnProperty(limit, 'PageSize')) {
                             if (typeof limit.PageSize !== 'string') { throw new TypeError(`The "PageSize" property of the "HugePagesLimits" object must be a string, instead got ${typeof limit.PageSize}`); }
                         } else {
                             throw new SyntaxError(`The "HugePagesLimits" object must have a "PageSize" property.`);
                         }
 
-                        if ('Limit' in limit) {
+                        if (helpers.hasOwnProperty(limit, 'Limit')) {
                             if (typeof limit.Limit !== 'number') { throw new TypeError(`The "Limit" property of the "HugePagesLimits" object must be a number, instead got ${typeof limit.Limit}`); }
                         } else {
                             throw new SyntaxError(`The "HugePagesLimits" object must have a "Limit" property.`);
@@ -813,42 +813,42 @@ class ContainersManager {
                     requestBody.HugePagesLimits = options.HugePagesLimits;
                 }
 
-                if ('SecurityOpt' in options) {
+                if (helpers.hasOwnProperty(options, 'SecurityOpt')) {
                     if (!Array.isArray(options.SecurityOpt)) { throw new TypeError(`The "SecurityOpt" (when provided) option must be an array, instead got ${typeof options.SecurityOpt}`); }
                     if (options.SecurityOpt.some(item => typeof item !== 'string' || item.length === 0)) { throw new TypeError(`The "SecurityOpt" array must contain strings only.`); }
                     requestBody.SecurityOpt = options.SecurityOpt;
                 }
 
-                if ('CapAdd' in options) {
+                if (helpers.hasOwnProperty(options, 'CapAdd')) {
                     if (!Array.isArray(options.CapAdd)) { throw new TypeError(`The "CapAdd" (when provided) option must be an array, instead got ${typeof options.CapAdd}`); }
                     if (options.CapAdd.some(item => typeof item !== 'string' || item.length === 0)) { throw new TypeError(`The "CapAdd" array must contain strings only.`); }
                     requestBody.CapAdd = options.CapAdd;
                 }
 
-                if ('CapDrop' in options) {
+                if (helpers.hasOwnProperty(options, 'CapDrop')) {
                     if (!Array.isArray(options.CapDrop)) { throw new TypeError(`The "CapDrop" (when provided) option must be an array, instead got ${typeof options.CapDrop}`); }
                     if (options.CapDrop.some(item => typeof item !== 'string' || item.length === 0)) { throw new TypeError(`The "CapDrop" array must contain strings only.`); }
                     requestBody.CapDrop = options.CapDrop;
                 }
 
-                if ('Devices' in options) {
+                if (helpers.hasOwnProperty(options, 'Devices')) {
                     if (!Array.isArray(options.Devices)) { throw new TypeError(`The "Devices" (when provided) option must be an array, instead got ${typeof options.Devices}`); }
                     for (const device of options.Devices) {
                         if (!helpers.isObject(device)) { throw new TypeError(`The "Devices" option must be an array of objects but one of the objects is not an object, instead got ${typeof device}`); }
 
-                        if ('PathOnHost' in device) {
+                        if (helpers.hasOwnProperty(device, 'PathOnHost')) {
                             if (typeof device.PathOnHost !== 'string') { throw new TypeError(`The "PathOnHost" property of the "Devices" object must be a string, instead got ${typeof device.PathOnHost}`); }
                         } else {
                             throw new SyntaxError(`The "Devices" object must have a "PathOnHost" property.`);
                         }
 
-                        if ('PathInContainer' in device) {
+                        if (helpers.hasOwnProperty(device, 'PathInContainer')) {
                             if (typeof device.PathInContainer !== 'string') { throw new TypeError(`The "PathInContainer" property of the "Devices" object must be a string, instead got ${typeof device.PathInContainer}`); }
                         } else {
                             throw new SyntaxError(`The "Devices" object must have a "PathInContainer" property.`);
                         }
 
-                        if ('CgroupPermissions' in device) {
+                        if (helpers.hasOwnProperty(device, 'CgroupPermissions')) {
                             if (typeof device.CgroupPermissions !== 'string') { throw new TypeError(`The "CgroupPermissions" property of the "Devices" object must be a string, instead got ${typeof device.CgroupPermissions}`); }
                         } else {
                             throw new SyntaxError(`The "Devices" object must have a "CgroupPermissions" property.`);
@@ -858,12 +858,12 @@ class ContainersManager {
                     requestBody.Devices = options.Devices;
                 }
 
-                if ('CpuCfsQuota' in options) {
+                if (helpers.hasOwnProperty(options, 'CpuCfsQuota')) {
                     if (typeof options.CpuCfsQuota !== 'number') { throw new TypeError(`The "CpuCfsQuota" (when provided) option must be a number, instead got ${typeof options.CpuCfsQuota}`); }
                     requestBody.CpuCfsQuota = options.CpuCfsQuota;
                 }
 
-                if ('Sysctls' in options) {
+                if (helpers.hasOwnProperty(options, 'Sysctls')) {
                     if (!options.Sysctls || !helpers.isObject(options.Sysctls)) { throw new TypeError(`The "Sysctls" (when provided) option must be an object, instead got ${typeof options.Sysctls}`); }
                     for (const [key, value] of Object.entries(options.Sysctls)) {
                         if (typeof key !== 'string') { throw new TypeError(`The "Sysctls" object must have string keys, instead got ${typeof key}`); }
@@ -981,17 +981,17 @@ class ContainersManager {
             if (!helpers.isObject(options)) { throw new TypeError('The options argument (when provided) must be an object.'); }
 
             const params = new URLSearchParams();
-            if ('force' in options) {
+            if (helpers.hasOwnProperty(options, 'force')) {
                 if (typeof options.force !== 'boolean') { throw new TypeError('The "force" option must be a boolean.'); }
                 params.set('force', options.force.toString());
             }
 
-            if ('removeVolumes' in options) {
+            if (helpers.hasOwnProperty(options, 'removeVolumes')) {
                 if (typeof options.removeVolumes !== 'boolean') { throw new TypeError('The "removeVolumes" option must be a boolean.'); }
                 params.set('v', options.removeVolumes.toString());
             }
 
-            if ('link' in options) {
+            if (helpers.hasOwnProperty(options, 'link')) {
                 if (typeof options.link !== 'boolean') { throw new TypeError('The "link" option must be a boolean.'); }
                 params.set('link', options.link.toString());
             }
@@ -1022,7 +1022,7 @@ class ContainersManager {
 
         try {
             if (filters && helpers.isObject(filters)) {
-                if ('until' in filters) {
+                if (helpers.hasOwnProperty(filters, 'until')) {
                     if (['number', 'string'].includes(typeof filters.until) || filters.until instanceof Date) {
                         if (typeof filters.until === 'string') {
                             if (filters.until.length === 0) { throw new RangeError('The "until" filter cannot be an empty string.'); }
@@ -1041,7 +1041,7 @@ class ContainersManager {
                     }
                 }
 
-                if ('labels' in filters) {
+                if (helpers.hasOwnProperty(filters, 'labels')) {
                     if (!Array.isArray(filters.labels)) { throw new TypeError('The "labels" filter must be an array.'); }
                     for (const label of filters.labels) {
                         if (typeof label === 'string') {
@@ -1060,7 +1060,7 @@ class ContainersManager {
                             if (label.value.length === 0) { throw new RangeError('The "value" property of the "labels" filter cannot be an empty string.'); }
 
                             let equal = true;
-                            if ('equal' in label) {
+                            if (helpers.hasOwnProperty(label, 'equal')) {
                                 if (typeof label.equal !== 'boolean') { throw new TypeError('The "equal" property of the "labels" filter (when provided) must be a boolean.'); }
                                 equal = label.equal;
                             }
@@ -1161,7 +1161,7 @@ class ContainersManager {
                 }
 
                 if (output && helpers.isObject(output)) {
-                    if ('type' in output) {
+                    if (helpers.hasOwnProperty(output, 'type')) {
                         if (typeof output.type !== 'string') { throw new Error('The output type must be a string.'); }
                         if (!['stream', 'file'].includes(output.type)) { throw new Error('The output type must be either "stream" or "file".'); }
                         configs.output.type = output.type;
@@ -1170,7 +1170,7 @@ class ContainersManager {
                     }
 
                     if (configs.output.type === 'file') {
-                        if ('path' in output) {
+                        if (helpers.hasOwnProperty(output, 'path')) {
                             if (typeof output.path !== 'string') { throw new Error('The output path must be a string.'); }
                             if (output.path.length === 0) { throw new Error('The output path cannot be empty.'); }
                             configs.output.path = output.path;
@@ -1228,7 +1228,7 @@ class ContainersManager {
             try {
                 if (!configs || !helpers.isObject(configs)) { throw new TypeError('The options argument must be an object.'); }
 
-                if ('path' in configs) {
+                if (helpers.hasOwnProperty(configs, 'path')) {
                     if (typeof configs.path !== 'string') { throw new TypeError('The options path must be a string.'); }
                     if (configs.path.length === 0) { throw new TypeError('The options path cannot be empty.'); }
                     params.set('path', configs.path);
@@ -1236,7 +1236,7 @@ class ContainersManager {
                     throw new SyntaxError('The options object must have a "path" property to where the tarball will be extracted to.');
                 }
 
-                if ('context' in configs) {
+                if (helpers.hasOwnProperty(configs, 'context')) {
                     const context = configs.context;
                     if (path.extname(context)) {
                         if (!fs.existsSync(context)) { throw new Error(`The provided tar file "${context}" does not exist.`); }
@@ -1250,12 +1250,12 @@ class ContainersManager {
                     throw new SyntaxError('The options object must have a "context" property of the directory or the tarball to send.');
                 }
 
-                if ('noOverwrite' in configs) {
+                if (helpers.hasOwnProperty(configs, 'noOverwrite')) {
                     if (typeof configs.noOverwrite !== 'boolean') { throw new TypeError('The options noOverwrite must be a boolean.'); }
                     params.set('noOverwriteDirNonDir', String(configs.noOverwrite));
                 }
 
-                if ('copyUIDGID' in configs) {
+                if (helpers.hasOwnProperty(configs, 'copyUIDGID')) {
                     if (typeof configs.copyUIDGID !== 'boolean') { throw new TypeError('The options copyUIDGID must be a boolean.'); }
                     params.set('copyUIDGID', String(configs.copyUIDGID));
                 }

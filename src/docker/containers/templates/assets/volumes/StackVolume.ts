@@ -10,15 +10,15 @@ class StackVolume {
         if (container) { this.#_container = container; }
 
         if (typeof options === 'object' && Object.keys(options).length > 0) {
-            if ('name' in options) { this.#_data.name = options.name; } else { throw new Error('A volume name must be provided.'); }
-            if ('driver' in options) { this.#_data.driver = options.driver; }
-            if ('driverOpts' in options) { this.#_data.driverOpts = options.driverOpts }
-            if ('external' in options) { this.#_data.external = options.external; }
-            if ('labels' in options) { this.#_data.labels = options.labels; }
-            if ('scope' in options) { this.#_data.scope = options.scope; }
-            if ('accessMode' in options) { this.#_data.accessMode = options.accessMode; }
-            if ('tmpfs' in options) { this.#_data.tmpfs = options.tmpfs; }
-            if ('size' in options) { this.#_data.size = options.size; }
+            if (helpers.hasOwnProperty(options, 'name')) { this.#_data.name = options.name; } else { throw new Error('A volume name must be provided.'); }
+            if (helpers.hasOwnProperty(options, 'driver')) { this.#_data.driver = options.driver; }
+            if (helpers.hasOwnProperty(options, 'driverOpts')) { this.#_data.driverOpts = options.driverOpts }
+            if (helpers.hasOwnProperty(options, 'external')) { this.#_data.external = options.external; }
+            if (helpers.hasOwnProperty(options, 'labels')) { this.#_data.labels = options.labels; }
+            if (helpers.hasOwnProperty(options, 'scope')) { this.#_data.scope = options.scope; }
+            if (helpers.hasOwnProperty(options, 'accessMode')) { this.#_data.accessMode = options.accessMode; }
+            if (helpers.hasOwnProperty(options, 'tmpfs')) { this.#_data.tmpfs = options.tmpfs; }
+            if (helpers.hasOwnProperty(options, 'size')) { this.#_data.size = options.size; }
         } else {
             throw new TypeError('options must be an object.');
         }
@@ -217,7 +217,7 @@ class StackVolume {
         if (typeof value === 'boolean') {
             this.#_data.external = value;
         } else if (!(typeof value === 'object' && Object.keys(value).length > 0)) {
-            if ('name' in value) {
+            if (helpers.hasOwnProperty(value, 'name')) {
                 if (!(typeof value.name === 'string' && value.name.length > 0)) {
                     throw new TypeError("The external volume's 'name' property must be a non-empty string.");
                 }

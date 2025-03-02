@@ -46,19 +46,19 @@ class IPAM {
         if (!areAllObjects) { throw new TypeError("The 'config' property must be an array of objects."); }
 
         for (const config of value) {
-            if ('subnet' in config) {
+            if (helpers.hasOwnProperty(config, 'subnet')) {
                 if (typeof config.subnet !== 'string') { throw new TypeError("The 'subnet' property (when defined) must be a string."); }
             }
 
-            if ('gateway' in config) {
+            if (helpers.hasOwnProperty(config, 'gateway')) {
                 if (typeof config.gateway !== 'string') { throw new TypeError("The 'gateway' property (when defined) must be a string."); }
             }
 
-            if ('ipRange' in config) {
+            if (helpers.hasOwnProperty(config, 'ipRange')) {
                 if (typeof config.ipRange !== 'string') { throw new TypeError("The 'ipRange' property (when defined) must be a string."); }
             }
 
-            if ('auxAddress' in config) {
+            if (helpers.hasOwnProperty(config, 'auxAddress')) {
                 if (!(typeof config.auxAddress === 'object' && Object.keys(config.auxAddress).length > 0)) { throw new TypeError("The 'auxAddress' property (when defined) must be an object."); }
                 if (Object.keys(config.auxAddress).length === 0) { throw new TypeError("The 'auxAddress' object must not be empty."); }
             }
@@ -70,11 +70,11 @@ class IPAM {
     set(options: IPAMOptions) {
         if (!(typeof options === 'object' && Object.keys(options).length > 0)) { throw new TypeError("The 'options' parameter must be an object."); }
 
-        if ('driver' in options) {
+        if (helpers.hasOwnProperty(options, 'driver')) {
             this.#_data.driver = options.driver;
         }
 
-        if ('config' in options) {
+        if (helpers.hasOwnProperty(options, 'config')) {
             this.#_data.config = options.config;
         }
 

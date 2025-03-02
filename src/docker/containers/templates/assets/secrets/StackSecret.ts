@@ -1,4 +1,5 @@
-import { StackSecretOptions } from "../../../../../docs/docs";
+import { StackSecretOptions } from "../../docs";
+import helpers from "../../../../../utils/helpers";
 import ContainerTemplate from "../../ContainerTemplate";
 
 class StackSecret {
@@ -12,11 +13,11 @@ class StackSecret {
             throw new TypeError('options must be an object.');
         }
 
-        if ('name' in options) { this.#_data.name = options.name; } else { throw new Error('A secret name must be provided.'); }
+        if (helpers.hasOwnProperty(options, 'name')) { this.#_data.name = options.name; } else { throw new Error('A secret name must be provided.'); }
         if ('external' in options && options.external === true) {
             this.external = options.external;
         } else {
-            if ('file' in options) { this.#_data.file = options.file; } else { throw new Error('A file must be provided.'); }
+            if (helpers.hasOwnProperty(options, 'file')) { this.#_data.file = options.file; } else { throw new Error('A file must be provided.'); }
         }
     }
 

@@ -1,3 +1,4 @@
+import helpers from "../../../../../utils/helpers";
 import ContainerTemplate from "../../ContainerTemplate";
 import { FailureRestartOption, ServiceConfigMode } from "../services/assets/docs";
 
@@ -184,12 +185,12 @@ class ComposeBuilder {
                         this.#_write(`volumes:`).#_incIndent();
 
                         for (const volume of service.volumes) {
-                            if ('name' in volume) {
+                            if ('name' in volume && helpers.hasOwnProperty(volume, 'name')) {
                                 this.#_write(`- ${volume.name}:${volume.containerPath}:${volume.read_only === true ? 'ro' : 'rw'}`);
                                 continue;
                             }
 
-                            if ('hostPath' in volume) {
+                            if ('hostPath' in volume && helpers.hasOwnProperty(volume, 'hostPath')) {
                                 this.#_write(`- ${volume.hostPath}:${volume.containerPath}:${volume.read_only === true ? 'ro' : 'rw'}`);
                                 continue;
                             }
@@ -333,7 +334,7 @@ class ComposeBuilder {
                         this.#_write(`external_links:`).#_incIndent();
 
                         for (const link of service.external_links) {
-                            if ('internalContainerName' in link) {
+                            if (helpers.hasOwnProperty(link, 'internalContainerName')) {
                                 this.#_write(`- ${link.externalContainerName}:${link.internalContainerName}`);
                             } else {
                                 this.#_write(`- ${link.externalContainerName}`);

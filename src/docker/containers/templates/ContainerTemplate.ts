@@ -11,6 +11,7 @@ import path from "path";
 import { spawn } from 'child_process';
 import { DockerComposeUpOptions } from "./docs";
 import DockerSocket from "../../socket/DockerSocket";
+import helpers from "../../../utils/helpers";
 
 class ContainerTemplate {
     #_socket: DockerSocket;
@@ -254,15 +255,15 @@ class ContainerTemplate {
             // Validate the flags from the options
             const flags = Object.keys(options);
             for (const _flag of flags) {
-                if (_flag in options) {
+                if (helpers.hasOwnProperty(flags, _flag)) {
                     const flag = _flag as keyof DockerComposeUpOptions;
                     if (typeof options[flag] !== 'boolean') { throw new TypeError(`The '${flag}' option must be a boolean.`); }
                     // @ts-ignore
                     finalOptions[flag] = options[flag] === true ? true : undefined;
-                }
+                }                
             }
 
-            if ('scale' in options) {
+            if (helpers.hasOwnProperty(options, 'scale')) {
                 if (typeof options.scale !== 'object' || options.scale === null || Array.isArray(options.scale)) {
                     throw new TypeError("The 'scale' option (when provided) must be an object.");
                 }
@@ -276,7 +277,7 @@ class ContainerTemplate {
                 finalOptions.scale = options.scale;
             }
 
-            if ('env' in options) {
+            if (helpers.hasOwnProperty(options, 'env')) {
                 if (typeof options.env !== 'object' || options.env === null || Array.isArray(options.env)) {
                     throw new TypeError("The 'env' option (when provided) must be an object.");
                 }
@@ -284,13 +285,13 @@ class ContainerTemplate {
                 this.environment.add(options.env);
             }
 
-            if ('timeout' in options) {
+            if (helpers.hasOwnProperty(options, 'timeout')) {
                 if (typeof options.timeout !== 'number') { throw new TypeError("The 'timeout' option (when provided) must be a number."); }
                 if (options.timeout <= 0) { throw new Error("The 'timeout' option (when provided) must be greater than 0."); }
                 finalOptions.timeout = options.timeout;
             }
 
-            if ('services' in options) {
+            if (helpers.hasOwnProperty(options, 'services')) {
                 if (!Array.isArray(options.services)) { throw new TypeError("The 'services' option (when provided) must be an array."); }
                 for (const serviceName of options.services) {
                     if (typeof serviceName !== 'string') { throw new TypeError("The 'services' option (when provided) must be an array of strings."); }
@@ -300,7 +301,7 @@ class ContainerTemplate {
                 finalOptions.services = options.services;
             }
 
-            if ('files' in options) {
+            if (helpers.hasOwnProperty(options, 'files')) {
                 if (!Array.isArray(options.files)) { throw new TypeError("The 'files' option (when provided) must be an array."); }
                 for (const filePath of Array.from(new Set(options.files))) {
                     if (typeof filePath !== 'string') { throw new TypeError("The 'files' option (when provided) must be an array of strings."); }

@@ -32,21 +32,21 @@ class Registries {
             if ('authentication' in details && details.authentication) {
                 const auth = details.authentication;
 
-                if ('username' in auth) {
+                if (helpers.hasOwnProperty(auth, 'username')) {
                     if (typeof auth.username !== 'string' || auth.username.length === 0) { throw new TypeError(`The registry "username" option must be a non-empty string.`); }
                 }
 
-                if ('password' in auth) {
+                if (helpers.hasOwnProperty(auth, 'password')) {
                     if (typeof auth.password !== 'string' || auth.password.length === 0) { throw new TypeError(`The registry "password" option must be a non-empty string.`); }
                 }
 
-                if ('email' in auth) {
+                if (helpers.hasOwnProperty(auth, 'email')) {
                     if (typeof auth.email !== 'string' || auth.email.length === 0) { throw new TypeError(`The registry "email" option (when provided) must be a non-empty string.`); }
                     if (!helpers.isValidEmail(auth.email)) { throw new TypeError(`The registry "email" you provided (${auth.email}) must be a valid email address.`); }
                 }
             }
 
-            if ('serveraddress' in details) {
+            if (helpers.hasOwnProperty(details, 'serveraddress')) {
                 if (typeof details.serveraddress !== 'string' || details.serveraddress.length === 0) { throw new TypeError(`The "serveraddress" option (when provided) must be a non-empty string.`); }
                 if (!helpers.isURL(details.serveraddress)) { throw new TypeError(`The "serveraddress" you provided (${details.serveraddress}) must be a valid URL.`); }
             } else {

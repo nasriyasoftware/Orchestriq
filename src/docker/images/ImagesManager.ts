@@ -63,12 +63,12 @@ class ImagesManager {
             queryParams.set('fromImage', image);
 
             if (options) {
-                if ('tag' in options) {
+                if (helpers.hasOwnProperty(options, 'tag')) {
                     if (typeof options.tag !== 'string' || options.tag.length === 0) { throw new TypeError('Image tag (when provided) must be a non-empty string.'); }
                     queryParams.set('tag', options.tag);
                 }
 
-                if ('registry' in options) {
+                if (helpers.hasOwnProperty(options, 'registry')) {
                     if (typeof options.registry !== 'string' || options.registry.length === 0) { throw new TypeError('Image Registry (when provided) must be a non-empty string.'); }
                     const registry = registeries.get(options.registry);
                     if (!registry) { throw new Error(`Registry "${options.registry}" is not defined. Please define the registry before using it.`); }
@@ -76,7 +76,7 @@ class ImagesManager {
                     queryParams.set('fromImage', `${registry.serveraddress}/${image}`);
                     if (registry.authentication) { reqOptions.headers['X-Registry-Auth'] = registry.xAuthHeader; }
                 } else {
-                    if ('registryURL' in options) {
+                    if (helpers.hasOwnProperty(options, 'registryURL')) {
                         if (isURL) { throw new Error('Image URL cannot be provided when using the "registryURL" option.'); }
                         if (typeof options.registryURL !== 'string' || options.registryURL.length === 0) { throw new TypeError('Image Registry URL (when provided) must be a non-empty string.'); }
                         if (!helpers.isURL(options.registryURL)) { throw new TypeError('Image Registry URL (when provided) must be a valid URL.'); }
@@ -179,19 +179,19 @@ class ImagesManager {
             }
 
             if (options) {
-                if ('tag' in options) {
+                if (helpers.hasOwnProperty(options, 'tag')) {
                     if (typeof options.tag !== 'string' || options.tag.length === 0) { throw new TypeError('Image tag (when provided) must be a non-empty string.'); }
                     if (cache.tag) { throw new SyntaxError('Image tag was already provided in the image name. Use either the image name or the "tag" option, not both.'); }
                     cache.tag = options.tag;
                 }
 
-                if ('registry' in options) {
+                if (helpers.hasOwnProperty(options, 'registry')) {
                     if (typeof options.registry !== 'string' || options.registry.length === 0) { throw new TypeError('Image Registry (when provided) must be a non-empty string.'); }
                     const registry = registeries.get(options.registry);
                     if (!registry) { throw new Error(`Registry "${options.registry}" is not defined. Please define the registry before using it.`); }
                     if (registry.authentication) { reqOptions.headers['X-Registry-Auth'] = registry.xAuthHeader; }
                 } else {
-                    if ('registryURL' in options) {
+                    if (helpers.hasOwnProperty(options, 'registryURL')) {
                         if (typeof options.registryURL !== 'string' || options.registryURL.length === 0) { throw new TypeError('Image Registry URL (when provided) must be a non-empty string.'); }
                         if (!helpers.isURL(options.registryURL)) { throw new TypeError('Image Registry URL (when provided) must be a valid URL.'); }
                         cache.serveraddress = options.registryURL;
@@ -243,19 +243,19 @@ class ImagesManager {
                 returnJSON: false
             };
 
-            if ('repository' in options) {
+            if (helpers.hasOwnProperty(options, 'repository')) {
                 if (typeof options.repository !== 'string' || options.repository.length === 0) { throw new TypeError('The "repository" option must be a non-empty string.'); }
                 queryParams.set('repo', options.repository);
             } else {
                 throw new Error('The "repository" option is required when using the "tag" option.');
             }
 
-            if ('tag' in options) {
+            if (helpers.hasOwnProperty(options, 'tag')) {
                 if (typeof options.tag !== 'string' || options.tag.length === 0) { throw new TypeError('The "tag" option (when provided) must be a non-empty string.'); }
                 queryParams.set('tag', options.tag);
             }
 
-            if ('force' in options) {
+            if (helpers.hasOwnProperty(options, 'force')) {
                 if (typeof options.force !== 'boolean') { throw new TypeError('The "force" option (when provided) must be a boolean.'); }
                 queryParams.set('force', String(options.force));
             }
@@ -289,17 +289,17 @@ class ImagesManager {
             let imageTag = _imageTag;
 
             if (typeof options === 'object' && Object.keys(options).length > 0) {
-                if ('force' in options) {
+                if (helpers.hasOwnProperty(options, 'force')) {
                     if (typeof options.force !== 'boolean') { throw new TypeError(`The "force" option (when provided) must be a boolean.`) }
                     if (options.force) { queryParams.push('force=true'); }
                 }
 
-                if ('noprune' in options) {
+                if (helpers.hasOwnProperty(options, 'noprune')) {
                     if (typeof options.noprune !== 'boolean') { throw new TypeError(`The "noprune" option (when provided) must be a boolean.`) }
                     if (options.noprune) { queryParams.push('noprune=true'); }
                 }
 
-                if ('tag' in options) {
+                if (helpers.hasOwnProperty(options, 'tag')) {
                     if (imageTag) { throw new SyntaxError(`The "tag" option cannot be used with an image name that includes a tag.`) }
                     if (typeof options.tag !== 'string' || options.tag.length === 0) { throw new TypeError(`The "tag" option (when provided) must be a non-empty string.`) }
                     imageTag = options.tag;
@@ -365,14 +365,14 @@ class ImagesManager {
 
         try {
             if (!helpers.isValidObject(options)) { throw new TypeError('Build options must be an object.'); }
-            if ('name' in options) {
+            if (helpers.hasOwnProperty(options, 'name')) {
                 if (typeof options.name !== 'string' || options.name.length === 0) { throw new TypeError('The image name must be a non-empty string.'); }
                 if (options.name.includes(':')) { throw new SyntaxError(`The image name cannot include the ':' character. You can specify the tag using the "tag" option.`); }
             } else {
                 throw new SyntaxError(`The image 'name' option is required and is missing.`);
             }
 
-            if ('tag' in options) {
+            if (helpers.hasOwnProperty(options, 'tag')) {
                 if (typeof options.tag !== 'string' || options.tag.length === 0) { throw new TypeError('The image tag must be a non-empty string.'); }
                 if (options.tag.includes(':')) {
                     const [name, tag] = options.tag.split(':');
@@ -386,7 +386,7 @@ class ImagesManager {
                 data.t = `${options.name}:${options.tag}`;
             }
 
-            if ('context' in options) {
+            if (helpers.hasOwnProperty(options, 'context')) {
                 if (typeof options.context !== 'string' || options.context.length === 0) { throw new TypeError('The build context must be a non-empty string.'); }
                 const isURL = helpers.isURL(options.context);
 
@@ -419,12 +419,12 @@ class ImagesManager {
                 configs.context.tar.isTemp = true;
             }
 
-            if ('dockerfileName' in options) {
+            if (helpers.hasOwnProperty(options, 'dockerfileName')) {
                 if (typeof options.dockerfileName !== 'string' || options.dockerfileName.length === 0) { throw new TypeError('The Dockerfile name must be a non-empty string.'); }
                 configs.dockerfile.name = data.dockerfile = options.dockerfileName;
             }
 
-            if ('dockerfilePath' in options) {
+            if (helpers.hasOwnProperty(options, 'dockerfilePath')) {
                 if (typeof options.dockerfilePath !== 'string') { throw new TypeError(`The "dockerfilePath" (when provided) must be a string but instead got ${typeof options.dockerfilePath}`) }
                 configs.dockerfile.path = options.dockerfilePath;
             }
@@ -468,7 +468,7 @@ class ImagesManager {
                     await fs.promises.unlink(cache.copiedFilePath);
                 }
 
-                if (cache.contextHasDockerFile) {                  
+                if (cache.contextHasDockerFile) {
                     // Rename the original file to the original name
                     await fs.promises.copyFile(cache.backupFilePath as string, path.join(configs.context.path, configs.dockerfile.name));
                     // Delete the backup file
@@ -476,47 +476,47 @@ class ImagesManager {
                 }
             }
 
-            if ('noCache' in options) {
+            if (helpers.hasOwnProperty(options, 'noCache')) {
                 if (typeof options.noCache !== 'boolean') { throw new TypeError('The "noCache" option (when provided) must be a boolean.'); }
                 if (options.noCache) { data.nocache = true; }
             }
 
-            if ('removeIntermediate' in options) {
+            if (helpers.hasOwnProperty(options, 'removeIntermediate')) {
                 if (typeof options.removeIntermediate !== 'boolean') { throw new TypeError('The "removeIntermediate" option (when provided) must be a boolean.'); }
                 data.rm = options.removeIntermediate;
             }
 
-            if ('forceRemoveIntermediate' in options) {
+            if (helpers.hasOwnProperty(options, 'forceRemoveIntermediate')) {
                 if (typeof options.forceRemoveIntermediate !== 'boolean') { throw new TypeError('The "forceRemoveIntermediate" option (when provided) must be a boolean.'); }
                 data.forcerm = options.forceRemoveIntermediate;
             }
 
-            if ('pullBaseImages' in options) {
+            if ('pullBaseImages' in options && helpers.hasOwnProperty(options, 'pullBaseImages')) {
                 if (typeof options.pullBaseImages !== 'boolean') { throw new TypeError('The "pullBaseImages" option (when provided) must be a boolean.'); }
                 data.pull = options.pullBaseImages;
             }
 
-            if ('networkMode' in options) {
+            if (helpers.hasOwnProperty(options, 'networkMode')) {
                 if (typeof options.networkMode !== 'string' || options.networkMode.length === 0) { throw new TypeError('The "networkMode" option (when provided) must be a non-empty string.'); }
                 data.networkmode = options.networkMode;
             }
 
-            if ('platform' in options) {
+            if (helpers.hasOwnProperty(options, 'platform')) {
                 if (typeof options.platform !== 'string' || options.platform.length === 0) { throw new TypeError('The "platform" option (when provided) must be a non-empty string.'); }
                 data.platform = options.platform;
             }
 
-            if ('labels' in options) {
+            if (helpers.hasOwnProperty(options, 'labels')) {
                 if (!helpers.isValidObject(options.labels)) { throw new TypeError('The "labels" option (when provided) must be an object.'); }
                 data.labels = options.labels;
             }
 
-            if ('buildArgs' in options) {
+            if (helpers.hasOwnProperty(options, 'buildArgs')) {
                 if (!helpers.isValidObject(options.buildArgs)) { throw new TypeError('The "buildArgs" option (when provided) must be an object.'); }
                 data.buildargs = options.buildArgs;
             }
 
-            if ('outputs' in options) {
+            if (helpers.hasOwnProperty(options, 'outputs')) {
                 if (!Array.isArray(options.outputs)) { throw new TypeError('The "outputs" option (when provided) must be an array.'); }
                 for (const output of options.outputs) {
                     if (!helpers.isValidObject(output)) { throw new TypeError('The "outputs" option (when provided) must be an array of objects.'); }
@@ -528,7 +528,7 @@ class ImagesManager {
                 data.outputs = options.outputs.map(i => `${i.key}=${i.value}`).join(',');
             }
 
-            if ('verbose' in options) {
+            if (helpers.hasOwnProperty(options, 'verbose')) {
                 if (typeof options.verbose !== 'boolean') { throw new TypeError('The "verbose" option (when provided) must be a boolean.'); }
                 data.q = !options.verbose;
                 configs.verbose = options.verbose;

@@ -1,3 +1,4 @@
+import helpers from "../../../../../../utils/helpers";
 import { ResourceLimits, ServiceDeploymentData, ResourceConfig, ResourceReservations, RestartPolicyConfig, Placement, ServiceUpdateConfig } from "./docs";
 
 class ServiceDeployment {
@@ -6,36 +7,36 @@ class ServiceDeployment {
     #_helpers = {
         validateUpdateConfig: (value: ServiceUpdateConfig, type: 'update_config' | 'rollback_config') => {
             const cofigs: ServiceUpdateConfig = {};
-            if ('parallelism' in value) {
+            if (helpers.hasOwnProperty(value, 'parallelism')) {
                 if (typeof value.parallelism !== 'number') { throw new TypeError(`The deployment's '${type}.parallelism' property (when defined) must be a number.`); }
                 if (value.parallelism < 1) { throw new SyntaxError(`The deployment's '${type}.parallelism' property must be greater than 0.`); }
                 cofigs.parallelism = value.parallelism;
             }
 
-            if ('delay' in value) {
+            if (helpers.hasOwnProperty(value, 'delay')) {
                 if (typeof value.delay !== 'string') { throw new TypeError(`The deployment's '${type}.delay' property (when defined) must be a string (e.g., '30s').`); }
                 cofigs.delay = value.delay;
             }
 
-            if ('failure_action' in value) {
+            if (helpers.hasOwnProperty(value, 'failure_action')) {
                 if (value.failure_action !== 'continue' && value.failure_action !== 'pause' && value.failure_action !== 'rollback') {
                     throw new SyntaxError(`The deployment's '${type}.failure_action' property must be one of 'continue', 'pause' or 'rollback'.`)
                 }
                 cofigs.failure_action = value.failure_action;
             }
 
-            if ('monitor' in value) {
+            if (helpers.hasOwnProperty(value, 'monitor')) {
                 if (typeof value.monitor !== 'string') { throw new TypeError(`The deployment's '${type}.monitor' property (when defined) must be a string.`); }
                 cofigs.monitor = value.monitor;
             }
 
-            if ('max_failure_ratio' in value) {
+            if (helpers.hasOwnProperty(value, 'max_failure_ratio')) {
                 if (typeof value.max_failure_ratio !== 'number') { throw new TypeError(`The deployment's '${type}.max_failure_ratio' property (when defined) must be a number.`); }
                 if (value.max_failure_ratio < 0) { throw new SyntaxError(`The deployment's '${type}.max_failure_ratio' property must be greater than or equal to 0.`); }
                 cofigs.max_failure_ratio = value.max_failure_ratio;
             }
 
-            if ('order' in value) {
+            if (helpers.hasOwnProperty(value, 'order')) {
                 if (value.order !== 'start-first' && value.order !== 'stop-first') { throw new SyntaxError(`The deployment's '${type}.order' property must be 'start-first' or 'stop-first'.`); }
                 cofigs.order = value.order;
             }
@@ -98,7 +99,7 @@ class ServiceDeployment {
         if (!(typeof value === 'object' && Object.keys(value).length > 0)) { throw new SyntaxError(`The deployment's 'resources' property (when defined) must be an object with at least one property.`); }
 
         const configs: ResourceConfig = {}
-        if ('limits' in value) {
+        if (helpers.hasOwnProperty(value, 'limits')) {
             if (!(typeof value.limits === 'object' && Object.keys(value.limits).length > 0)) { throw new SyntaxError(`The deployment's 'resources.limits' property (when defined) must be an object with at least one property.`); }
 
             const limits: ResourceLimits = {};
@@ -115,7 +116,7 @@ class ServiceDeployment {
             if (Object.keys(limits).length > 0) { configs.limits = limits; }
         }
 
-        if ('reservations' in value) {
+        if (helpers.hasOwnProperty(value, 'reservations')) {
             if (!(typeof value.reservations === 'object' && Object.keys(value.reservations).length > 0)) { throw new SyntaxError(`The deployment's 'resources.reservations' property (when defined) must be an object with at least one property.`); }
 
             const reservations: ResourceReservations = {};
@@ -298,7 +299,7 @@ class ServiceDeployment {
         if (!(typeof value === 'object' && Object.keys(value).length > 0)) { throw new TypeError("The deployment's 'restart_policy' property must be a non-empty object."); }
 
         const configs: RestartPolicyConfig = {};
-        if ('condition' in value) {
+        if (helpers.hasOwnProperty(value, 'condition')) {
             if (typeof value.condition !== 'string') { throw new TypeError(`The deployment's 'restart_policy.condition' property must be a string, instead of ${typeof value.condition}.`); }
             if (value.condition !== 'none' && value.condition !== 'on-failure' && value.condition !== 'any') {
                 throw new SyntaxError(`The deployment's 'restart_policy.condition' property must be one of 'none', 'on-failure' or 'any'.`)
@@ -307,18 +308,18 @@ class ServiceDeployment {
             configs.condition = value.condition;
         }
 
-        if ('delay' in value) {
+        if (helpers.hasOwnProperty(value, 'delay')) {
             if (typeof value.delay !== 'string') { throw new TypeError(`The deployment's 'restart_policy.delay' property must be a string (e.g., '30s'), instead of ${typeof value.delay}.`); }
             configs.delay = value.delay;
         }
 
-        if ('max_attempts' in value) {
+        if (helpers.hasOwnProperty(value, 'max_attempts')) {
             if (typeof value.max_attempts !== 'number') { throw new TypeError(`The deployment's 'restart_policy.max_attempts' property must be a number, instead of ${typeof value.max_attempts}.`); }
             if (value.max_attempts < 1) { throw new SyntaxError("The deployment's 'restart_policy.max_attempts' property must be greater than 0."); }
             configs.max_attempts = value.max_attempts;
         }
 
-        if ('window' in value) {
+        if (helpers.hasOwnProperty(value, 'window')) {
             if (typeof value.window !== 'string') { throw new TypeError(`The deployment's 'restart_policy.window' property must be a string (e.g., '5m'), instead of ${typeof value.window}.`); }
             configs.window = value.window;
         }
@@ -348,19 +349,19 @@ class ServiceDeployment {
         if (!(typeof value === 'object' && Object.keys(value).length > 0)) { throw new TypeError("The deployment's 'placement' property must be a non-empty object."); }
 
         const placement: Placement = {};
-        if ('constraints' in value) {
+        if (helpers.hasOwnProperty(value, 'constraints')) {
             if (!Array.isArray(value.constraints)) { throw new TypeError(`The deployment's 'placement.constraints' property (when defined) must be an array, instead of ${typeof value.constraints}.`); }
             if (!value.constraints.every((constraint) => typeof constraint === 'string')) { throw new TypeError(`The deployment's 'placement.constraints' property (when defined) must be an array of strings.`); }
             placement.constraints = value.constraints;
         }
 
-        if ('preferences' in value) {
+        if (helpers.hasOwnProperty(value, 'preferences')) {
             if (!Array.isArray(value.preferences)) { throw new TypeError(`The deployment's 'placement.preferences' property (when defined) must be an array, instead of ${typeof value.preferences}.`); }
 
             const preferences: Placement['preferences'] = [];
             for (const preference of value.preferences) {
                 if (!(typeof preference === 'object' && Object.keys(preference).length > 0)) { throw new TypeError(`The deployment's 'placement.preferences' property (when defined) must be an array of objects.`); }
-                if ('spread' in preference) {
+                if (helpers.hasOwnProperty(preference, 'spread')) {
                     if (typeof preference.spread !== 'string') { throw new TypeError(`The deployment's 'placement.preferences.spread' property (when defined) must be a string, instead of ${typeof preference.spread}.`); }
                     preferences.push({ spread: preference.spread });
                 }
@@ -369,7 +370,7 @@ class ServiceDeployment {
             placement.preferences = preferences;
         }
 
-        if ('max_replicas_per_node' in value) {
+        if (helpers.hasOwnProperty(value, 'max_replicas_per_node')) {
             if (typeof value.max_replicas_per_node !== 'number') { throw new TypeError(`The deployment's 'placement.max_replicas_per_node' property must be a number, instead of ${typeof value.max_replicas_per_node}.`); }
             if (value.max_replicas_per_node < 1) { throw new SyntaxError("The deployment's 'placement.max_replicas_per_node' property must be greater than 0."); }
             placement.max_replicas_per_node = value.max_replicas_per_node;
