@@ -35,7 +35,7 @@ class ContainersManager {
     async list(): Promise<DockerContainer[]> {
         try {
             const containers: DockerContainerData[] = await this.#_socket.fetch('containers/json?all=true');
-            return containers.map(container => new DockerContainer(container));
+            return containers.map(container => new DockerContainer(container, this));
         } catch (error) {
             if (error instanceof Error) { error.message = `Unable to list containers: ${error.message}`; }
             throw error;
@@ -247,7 +247,7 @@ class ContainersManager {
             const response = await this.#_socket.fetch(`containers/${id}/json`, { method: 'GET', returnJSON: false });
             const data = await response.json();
 
-            if (response.ok) { return new DockerContainer(data); }
+            if (response.ok) { return new DockerContainer(data, this); }
             if (response.status === 404) { return; }
             if (response.status === 500) { throw new Error(data.message) }
         } catch (error) {
@@ -344,7 +344,7 @@ class ContainersManager {
             // console.log(response)
             const data = await response.text();
             if (response.ok) {
-                return data;
+                return data || '';
             }
 
             if (response.status === 404) { return undefined; }
@@ -1099,9 +1099,7 @@ class ContainersManager {
         }
     }
 
-    /**
-     * Contains methods related to the container's archive.
-     */
+    /**Contains methods related to the container's archive. */
     readonly archive = {
         /**
          * Retrieves the properties of a file or directory from a Docker container.
@@ -1209,10 +1207,10 @@ class ContainersManager {
          *
          * @param {string} id - The ID of the container to which to add the files.
          * @param {ContainerArchiveAddFilesOptions} configs - The options for adding the files.
-         *   @param {string} path - The path inside the container to which to add the files.
-         *   @param {string} context - The path to the tarball or directory containing the files to add.
-         *   @param {boolean} [noOverwrite=false] - Whether to overwrite existing files if the source and destination have the same name.
-         *   @param {boolean} [copyUIDGID=false] - Whether to copy the UID/GID of the source file to the destination file.
+         *   @param {string} configs.path - The path inside the container to which to add the files.
+         *   @param {string} configs.context - The path to the tarball or directory containing the files to add.
+         *   @param {boolean} [configs.noOverwrite=false] - Whether to overwrite existing files if the source and destination have the same name.
+         *   @param {boolean} [configs.copyUIDGID=false] - Whether to copy the UID/GID of the source file to the destination file.
          * @returns {Promise<void>} A promise that resolves when the files have been added.
          * @throws {Error} Throws an error if the container ID, path, or context are invalid, or if the request fails.
          */
