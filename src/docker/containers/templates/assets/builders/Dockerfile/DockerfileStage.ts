@@ -325,8 +325,6 @@ class DockerfileStage {
                 if (typeof arg.value !== 'string') { throw new Error('Argument value must be a string.'); }
                 const types = ['string', 'number', 'boolean'];
                 if (!types.includes(typeof arg.value)) { throw new Error('Argument value must be a string, number, or boolean.'); }
-            } else {
-                throw new Error('Arguments must have a value.');
             }
 
             if (helpers.hasOwnProperty(arg, 'global')) {
