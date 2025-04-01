@@ -117,5 +117,5 @@ class Registries {
     }
 }
 
-const registeries = new Registries();
-export default registeries;
+const registries = new Registries();
+export default registries;

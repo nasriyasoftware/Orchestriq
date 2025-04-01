@@ -3,7 +3,7 @@ import path from 'path';
 import tarball from "../../utils/Tarball";
 import helpers from "../../utils/helpers";
 import DockerSocket from "../socket/DockerSocket";
-import registeries from "../../registries/Registries";
+import registries from "../../registries/Registries";
 import { RegistryOptions } from "../../registries/docs";
 import { DockerImage, ImageHistoryEntry, ImageTagOptions, ImageRemoveOptions, BuildImageOptions, BuildImageEndpointParams } from "./docs";
 
@@ -70,7 +70,7 @@ class ImagesManager {
 
                 if (helpers.hasOwnProperty(options, 'registry')) {
                     if (typeof options.registry !== 'string' || options.registry.length === 0) { throw new TypeError('Image Registry (when provided) must be a non-empty string.'); }
-                    const registry = registeries.get(options.registry);
+                    const registry = registries.get(options.registry);
                     if (!registry) { throw new Error(`Registry "${options.registry}" is not defined. Please define the registry before using it.`); }
 
                     queryParams.set('fromImage', `${registry.serveraddress}/${image}`);
@@ -187,7 +187,7 @@ class ImagesManager {
 
                 if (helpers.hasOwnProperty(options, 'registry')) {
                     if (typeof options.registry !== 'string' || options.registry.length === 0) { throw new TypeError('Image Registry (when provided) must be a non-empty string.'); }
-                    const registry = registeries.get(options.registry);
+                    const registry = registries.get(options.registry);
                     if (!registry) { throw new Error(`Registry "${options.registry}" is not defined. Please define the registry before using it.`); }
                     if (registry.authentication) { reqOptions.headers['X-Registry-Auth'] = registry.xAuthHeader; }
                 } else {

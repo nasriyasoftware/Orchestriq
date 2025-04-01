@@ -57,7 +57,10 @@ const docker = new orchestriq.Docker({
     hostType: 'remote',
     /**The URL of the Docker daemon to connect to. */
     host: 'https://daemon.nasriya.net/',
-    /**If authentication is required (as it should be), provide the nessary credentials here. */
+    /**
+     * If authentication is required (as it should be),
+     * provide the necessary credentials here.
+     */
     authentication: {
         type: 'Basic',
         username: process.env.DOCKER_DAEMON_USERNAME,

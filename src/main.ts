@@ -1,5 +1,5 @@
 import Docker from "./docker/Docker";
-import registeries from "./registries/Registries";
+import registries from "./registries/Registries";
 export { default as Docker } from "./docker/Docker";
 
 class Orchestriq {
@@ -14,7 +14,7 @@ class Orchestriq {
      * The Registries class provides an interface for managing Docker registries.
      * It allows you to define, list, and remove registries.
      */
-    get registries() { return registeries }
+    get registries() { return registries }
 }
 
 const orchestriq = new Orchestriq();
