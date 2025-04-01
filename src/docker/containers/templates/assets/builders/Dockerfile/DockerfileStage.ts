@@ -26,7 +26,7 @@ class DockerfileStage {
         predefinedCommands: []
     }
 
-    #_predefinedCommands = {       
+    #_predefinedCommands = {
         npm: {
             version: {
                 value: undefined as string | undefined,
@@ -532,7 +532,7 @@ class DockerfileStage {
             const args = this.#_config.args.filter(arg => global === true ? arg.global === true : arg.global !== true);
             if (args.length === 0) { return; }
             this.#_lines.push(`# ${global === true ? 'Pre' : 'Post'}-Arguments`);
-            this.#_lines.push(`ARG ${args.map(arg => `${arg.name}=${arg.value}`).join(' ').trim()}`)
+            this.#_lines.push(`ARG ${args.map(arg => arg.value ? `${arg.name}=${arg.value}` : arg.name).join(' ').trim()}`)
         },
         from: () => {
             const as = this.#_config.as ? ` AS ${this.#_config.as}` : '';

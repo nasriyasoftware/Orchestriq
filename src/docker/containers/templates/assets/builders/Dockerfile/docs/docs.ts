@@ -9,7 +9,7 @@ export interface DockerfileArgItem {
     /**The name of the argument */
     name: string;
     /**The value of the argument */
-    value: string | number | boolean;
+    value?: string | number | boolean;
     /**Whether the argument is global (pre-`FROM`)
      * or application-specific (post-`FROM`). Default: `false`,
      * which means the argument is application-specific
