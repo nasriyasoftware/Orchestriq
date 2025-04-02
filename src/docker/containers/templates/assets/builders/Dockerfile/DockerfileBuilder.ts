@@ -147,7 +147,7 @@ class DockerfileBuilder {
         const cache = {
             group: { value: 'service_containers', check: false, placeholder: '', refPlaceholder: '' },
             user: { value: user, check: false, placeholder: '', refPlaceholder: '' },
-            for: 'service' as DockerfileUserOptions['for'],
+            for: 'service' as 'service' | 'build',
             args: [] as string[],
             checkUserGroup: false
         }

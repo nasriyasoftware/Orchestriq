@@ -2,7 +2,7 @@ export interface DockerfileUserOptions {
     /**Specify a group for the user. Default: `service_containers` */
     group?: string;
     /**Specify what the user is for. Default: `service`  */
-    for: 'service' | 'build';
+    for?: 'service' | 'build';
     /**
      * Whether to check if the user exists and create it if it doesn't.
      * Default: `false`
