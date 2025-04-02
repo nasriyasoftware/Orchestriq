@@ -115,7 +115,7 @@ class DockerfileBuilder {
 
         this.comment('Copy files');
         const content = copy.map(item => `COPY ${item.from ? `--from=${item.from} ` : ''}${item.src} ${item.dest}`).join('\n');
-        return this.content(content).newLine(2);
+        return this.content(content).newLine();
     }
 
     /**
@@ -184,10 +184,10 @@ class DockerfileBuilder {
 
 
         cache.user.placeholder = `${cache.for.toUpperCase()}_USER`;
-        cache.user.refPlaceholder = "'${" + cache.user.placeholder + "}'";
+        cache.user.refPlaceholder = "${" + cache.user.placeholder + "}";
 
         cache.group.placeholder = `${cache.for.toUpperCase()}_GROUP`;
-        cache.group.refPlaceholder = "'${" + cache.group.placeholder + "}'";
+        cache.group.refPlaceholder = "${" + cache.group.placeholder + "}";
 
         this.comment('Set the user and group for the container').args([
             { name: cache.user.placeholder, value: cache.user.value },
@@ -216,7 +216,7 @@ class DockerfileBuilder {
             this.comment('Add the user to the group').run(`usermod -aG ${cache.group.refPlaceholder} ${cache.user.refPlaceholder}`);
         }
 
-        return this.comment('Set the user and group for the container').content(`USER ${cache.user.refPlaceholder}:${cache.group.refPlaceholder}`);
+        return this.comment('Set the user and group for the container').content(`USER ${cache.user.placeholder}:${cache.group.placeholder}`);
     }
 
     /**
@@ -237,7 +237,7 @@ class DockerfileBuilder {
         if (this.#_cache.entrypoint.used) { throw new SyntaxError(`ENTRYPOINT can only be used once.`); }
 
         this.#_cache.entrypoint.used = true;
-        return this.content(`ENTRYPOINT [${entrypoint.split('').map(c => `"${c}"`).join(', ')}]`).newLine(2);
+        return this.content(`ENTRYPOINT [${entrypoint.split('').map(c => `"${c}"`).join(', ')}]`).newLine();
     }
 
     /**
@@ -259,7 +259,8 @@ class DockerfileBuilder {
         if (this.#_cache.cmd.used) { throw new SyntaxError(`CMD can only be used once.`); }
 
         this.#_cache.cmd.used = true;
-        return this.content(`CMD [${cmd.split('').map(c => `"${c}"`).join(', ')}]`).newLine(2);
+        this.comment('Set the default command to execute when the container starts');
+        return this.content(`CMD [${cmd.split(' ').map(c => `"${c}"`).join(', ')}]`).newLine();
     }
 
     /**
@@ -286,10 +287,10 @@ class DockerfileBuilder {
             if (typeof command !== 'string') { throw new TypeError('Commands must be strings.'); }
             if (command.trim().length === 0) { throw new Error('Commands must not be empty.'); }
 
-            if (!batch) { this.content(`RUN ${command.trim()}`).newLine(2); }
+            if (!batch) { this.content(`RUN ${command.trim()}`).newLine(); }
         }
 
-        return batch ? this.content(`RUN ${commands.filter(cmd => cmd.length > 0).map(cmd => cmd.trim()).join(' && ')}`).newLine(2) : this;
+        return batch ? this.content(`RUN ${commands.filter(cmd => cmd.length > 0).map(cmd => cmd.trim()).join(' && ')}`).newLine() : this;
     }
 
     /**
@@ -310,6 +311,7 @@ class DockerfileBuilder {
         const formattedEnv = entries.map((env, idx) => {
             idx++;
             const [key, value] = env;
+            if (idx === 1) { return `ENV ${key}=${value}`; }
             const entry = `${idx === 1 ? 'ENV ' : ''}${key}=${value}`;
 
             const breakPoint = idx % chunkSize === 0;
@@ -322,7 +324,7 @@ class DockerfileBuilder {
             }
         }).join('');
 
-        return this.comment('Environment Variables').content(formattedEnv).newLine(2);
+        return this.comment('Environment Variables').content(formattedEnv).newLine();
     }
 
     /**
@@ -343,7 +345,7 @@ class DockerfileBuilder {
             if (typeof volume !== 'string') { throw new TypeError(`The volume you provided (${volume}) must be a string, but a type of ${typeof volume} was received.`) }
         }
 
-        return this.comment('Volumes').content(`VOLUME [${volumes.map(i => `"${i}"`).join(', ')}]`).newLine(2);
+        return this.comment('Volumes').content(`VOLUME [${volumes.map(i => `"${i}"`).join(', ')}]`).newLine();
     }
 
     /**
@@ -365,7 +367,7 @@ class DockerfileBuilder {
             if (typeof port !== 'string' && typeof port !== 'number') { throw new TypeError(`The port you provided (${port}) can either be a number or a stringified number, but a type of ${typeof port} was received.`) }
         }
 
-        return this.comment('Exposed Ports').content(`EXPOSE ${ports.join(' ')}`).newLine(2);
+        return this.comment('Exposed Ports').content(`EXPOSE ${ports.join(' ')}`).newLine();
     }
 
     /**
@@ -379,7 +381,7 @@ class DockerfileBuilder {
     workDir(workDir: string): this {
         if (typeof workDir !== 'string') { throw new TypeError(`The "workDir" property is expected to be a string, yet it received ${typeof workDir}`) }
         if (workDir.length === 0) { throw new RangeError(`The "workDir" value cannot be an empty string`) }
-        return this.comment('Working Directory').content(`WORKDIR ${workDir}`).newLine(2);
+        return this.comment('Working Directory').content(`WORKDIR ${workDir}`).newLine();
     }
 
     /**
@@ -404,7 +406,7 @@ class DockerfileBuilder {
             this.content(`FROM ${fromImage}`);
         }
 
-        return this.newLine(2);
+        return this.newLine();
     }
 
     /**
@@ -453,7 +455,7 @@ class DockerfileBuilder {
             this.comment('Arguments').content(`ARG ${args.map(arg => arg.value ? `${arg.name}=${arg.value}` : arg.name).join(' ').trim()}`);
         }
 
-        return this.newLine(2);
+        return this.newLine();
     }
 
     /**
@@ -483,7 +485,7 @@ class DockerfileBuilder {
      * @param {string} comment - The comment to add.
      * @returns {this} The current instance of DockerfileBuilder.
      */
-    comment(comment: string, options = { newLine: true }): this {
+    comment(comment: string, options = { newLine: false }): this {
         this.#_lines.push(`# ${comment}`);
         if (options?.newLine === true) { this.newLine(); }
         return this;
@@ -496,7 +498,7 @@ class DockerfileBuilder {
      * @returns {this} The current instance of DockerfileBuilder.
      */
     newLine(num: number = 1): this {
-        this.#_lines.push('\n'.repeat(num));
+        this.#_lines.push(...' '.repeat(num || 1).split('').map(i => i.trim()));
         return this;
     }
 
