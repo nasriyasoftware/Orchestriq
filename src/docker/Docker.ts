@@ -6,6 +6,7 @@ import NetworksManager from "./networks/NetworksManager";
 import VolumesManager from "./volumes/VolumesManager";
 import ImagesManager from "./images/ImagesManager";
 import DockerfileTemplate from "./containers/templates/assets/builders/Dockerfile/DockerfileTemplate";
+import DockerfileBuilder from "./containers/templates/assets/builders/Dockerfile/DockerfileBuilder";
 
 class Docker {
     #_socket = new DockerSocket();
@@ -44,12 +45,48 @@ class Docker {
 
     /**
      * Retrieves the templates available for generating.
+     * @since v1.0.3
+     */
+    readonly builders = Object.freeze({
+        /**
+         * Retrieves a Dockerfile builder, allowing you to generate a Dockerfile used to build a Docker image.
+         * @returns {DockerfileBuilder} A Dockerfile builder that can be used to generate a Dockerfile.
+         * @since v1.0.3
+         */
+        dockerfile: (): DockerfileBuilder => {
+            return new DockerfileBuilder();
+        },
+        /**
+         * Retrieves a Dockerfile template builder with default settings.
+         * 
+         * This method provides an easy way to create a Dockerfile template
+         * without complex configuration. It is suitable for users who
+         * want to quickly generate a Dockerfile using standard settings.
+         * 
+         * For advanced users, we recommend using the `dockerfile` method
+         * to create a custom Dockerfile template.
+         * 
+         * @returns {DockerfileTemplate} A Dockerfile template builder that can be used to generate a Dockerfile.
+         * @since v1.0.3
+         */
+        easyDockerfileTemplate: (): DockerfileTemplate => {
+            return new DockerfileTemplate()
+        }
+    })
+
+    /**
+     * Retrieves the templates available for generating.
      * @returns {Object} An object containing the available templates.
      */
     readonly templates = Object.freeze({
         /**
          * Retrieves a Dockerfile template builder, allowing you to generate a Dockerfile used to build a Docker image.
          * @returns {DockerfileTemplate} A Dockerfile template builder that can be used to generate a Dockerfile.
+         * @deprecated
+         * Use `builders.easyDockerfileTemplate` instead, or use
+         * `builders.dockerfile` for advanced users.
+         * 
+         * Deprecated since v1.0.3.
          */
         dockerfile: (): DockerfileTemplate => {
             return new DockerfileTemplate()

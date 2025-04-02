@@ -1,3 +1,24 @@
+export interface DockerfileUserOptions {
+    /**Specify a group for the user. Default: `service_containers` */
+    group?: string;
+    /**Specify what the user is for. Default: `service`  */
+    for: 'service' | 'build';
+    /**
+     * Whether to check if the user exists and create it if it doesn't.
+     * Default: `false`
+     */
+    checkUser?: boolean;
+    /**
+     * Whether to check if the group exists and create it if it doesn't.
+     * Default: `false`
+     */
+    checkGroup?: boolean;
+    /**
+     * Whether to ensure the user exists on the group. Default: `false`
+     */
+    checkUserGroup?: boolean;
+}
+
 export interface DockerfileOutput {
     /**The path to the generated Dockerfile */
     path: string;
@@ -22,6 +43,16 @@ export interface DockerfileCopyItem {
     src: string;
     /**The destination of the file to copy */
     dest: string;
+    /**
+     * Specify the stage to copy the file from.
+     * @example
+     * const item = {
+     *     src: '/path/to/file',
+     *     dest: '/path/to/file',
+     *     from: 'stage1'
+     * }
+     */
+    from?: string;
 }
 
 export interface DockerfileStageConfig {
