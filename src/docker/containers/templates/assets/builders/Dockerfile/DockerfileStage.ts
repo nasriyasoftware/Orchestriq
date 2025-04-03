@@ -59,7 +59,7 @@ class DockerfileStage {
                     preferOffline: { flag: '--prefer-offline', value: false },
                     noSave: { flag: '--no-save', value: false },
                     ignoreScripts: { flag: '--ignore-scripts', value: false }
-                } as NPMInstallConfigs,
+                } as NPMInstallConfigs['flags'],
                 addCommand: () => {
                     this.#_lines.push('\n# Installing dependencies using NPM');
                     const flags = Object.entries(this.#_predefinedCommands.npm.install.flags).filter(flag => flag[1].value === true).map(flag => flag[1].flag).join(' ').trim();
@@ -106,14 +106,17 @@ class DockerfileStage {
              * @throws {Error} If any of the provided flags are invalid.
              */
             install: (options?: NPMInstallOptions) => {
-                if (helpers.isValidObject(options)) {
-                    const flagsData = this.#_predefinedCommands.npm.install.flags;
+                if (options && helpers.isValidObject(options)) {
+                    if (options.flags && helpers.hasOwnProperty(options, 'flags') && helpers.isValidObject(options.flags)) {
+                        const flagsData = this.#_predefinedCommands.npm.install.flags;
 
-                    for (const key in options) {
-                        const value = options[key as keyof NPMInstallOptions];
-                        if (typeof value !== 'boolean') { throw new TypeError(`A NPM command was configured with a flag (${key}) with an incorrect value. Expected a boolean value but instead got ${typeof value}`) }
-                        if (!(key in flagsData)) { throw new Error(`A NPM command was configured with an invalid flag (${key}).`) }
-                        flagsData[key as keyof NPMInstallConfigs].value = value;
+                        for (const flag in flagsData) {
+                            if (flag in options && helpers.hasOwnProperty(options, flag)) {
+                                const value = options.flags[flag as keyof NPMInstallOptions['flags']];
+                                if (typeof value !== 'boolean') { throw new TypeError(`A NPM command was configured with a flag (${flag}) with an incorrect value. Expected a boolean value but instead got ${typeof value}`) }
+                                flagsData[flag as keyof NPMInstallConfigs['flags']].value = value;
+                            }
+                        }
                     }
                 }
 

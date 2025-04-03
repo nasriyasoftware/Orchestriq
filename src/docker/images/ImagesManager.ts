@@ -534,6 +534,11 @@ class ImagesManager {
             }
 
             // Preparing request
+            // Converting the data values to primitive types
+            for (const key in data) {
+                const _data: Record<string, any> = data;
+                if (!['string', 'number', 'boolean'].includes(typeof _data[key])) { _data[key] = JSON.stringify(_data[key])}
+            }
             const queryParams = new URLSearchParams(data as Record<string, string>);
             const endpoint = `/build?${queryParams.toString()}`;
             if (configs.context.tar.path) {

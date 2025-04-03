@@ -1,6 +1,6 @@
 {
   "name": "@nasriya/orchestriq",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "A package to generate Docker files",
   "main": "./dist/cjs/main.js",
   "module": "./dist/esm/main.js",

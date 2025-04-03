@@ -1,3 +1,22 @@
+export interface SSHKeyCopyConfigs {
+    /**
+     * The path of the project that needs to be built.
+     * This is used to copy the SSH key in the project directory.
+     */
+    context: string;
+    /**
+     * The name of the SSH key or the path to the SSH key.
+     * If the value is not a path, the SSH key is expected to be in
+     * the default `.ssh` folder of the user.
+     */
+    from: string;    
+    /**
+     * Whether to install the SSH client on the image.
+     * Default: `false`
+     */
+    installClient?: boolean;
+}
+
 export interface DockerfileUserOptions {
     /**Specify a group for the user. Default: `service_containers` */
     group?: string;
@@ -12,11 +31,7 @@ export interface DockerfileUserOptions {
      * Whether to check if the group exists and create it if it doesn't.
      * Default: `false`
      */
-    checkGroup?: boolean;
-    /**
-     * Whether to ensure the user exists on the group. Default: `false`
-     */
-    checkUserGroup?: boolean;
+    checkGroup?: boolean;    
 }
 
 export interface DockerfileOutput {
@@ -163,30 +178,34 @@ interface DockerRunInstallNPMDependencies {
 export type DockerPredefinedRunCommand = DockerRunUpdateNPM | DockerRunInstallNPMDependencies;
 
 export interface NPMInstallOptions {
-    /** Omit optional dependencies */
-    omitOptional?: boolean;
-    /** Omit dev dependencies. Defaults: `true` */
-    omitDev?: boolean;
-    /** Don't run security audits. Defaults: `true` */
-    noAudit?: boolean;
-    /** Don't display funding messages. Defaults: `true` */
-    noFund?: boolean;
-    /** Don't show update notifications. Defaults: `true` */
-    noUpdateNotifier?: boolean;
-    /** Allow scripts to run as root inside Docker */
-    unsafePerm?: boolean;
-    /** Don't show progress bar */
-    noProgress?: boolean;
-    /** Force reinstall of already installed packages */
-    force?: boolean;
-    /** Use legacy peer dependency resolution */
-    legacyPeerDeps?: boolean;
-    /** Prefer offline installation */
-    preferOffline?: boolean;
-    /** Don't modify package.json or lock files */
-    noSave?: boolean;
-    /** Don't execute package lifecycle scripts */
-    ignoreScripts?: boolean;
+    flags?: {
+        /** Omit optional dependencies */
+        omitOptional?: boolean;
+        /** Omit dev dependencies. Defaults: `true` */
+        omitDev?: boolean;
+        /** Don't run security audits. Defaults: `true` */
+        noAudit?: boolean;
+        /** Don't display funding messages. Defaults: `true` */
+        noFund?: boolean;
+        /** Don't show update notifications. Defaults: `true` */
+        noUpdateNotifier?: boolean;
+        /** Allow scripts to run as root inside Docker */
+        unsafePerm?: boolean;
+        /** Don't show progress bar */
+        noProgress?: boolean;
+        /** Force reinstall of already installed packages */
+        force?: boolean;
+        /** Use legacy peer dependency resolution */
+        legacyPeerDeps?: boolean;
+        /** Prefer offline installation */
+        preferOffline?: boolean;
+        /** Don't modify package.json or lock files */
+        noSave?: boolean;
+        /** Don't execute package lifecycle scripts */
+        ignoreScripts?: boolean;
+    }
+    /** Run custom command(s) after NPM install */
+    postInstallRun?: string | string[];
 }
 
 interface NPMInstallConfigItem {
@@ -197,28 +216,32 @@ interface NPMInstallConfigItem {
 }
 
 export interface NPMInstallConfigs {
-    /** Omit optional dependencies */
-    omitOptional: NPMInstallConfigItem;
-    /** Omit dev dependencies */
-    omitDev: NPMInstallConfigItem;
-    /** Don't run security audits */
-    noAudit: NPMInstallConfigItem;
-    /** Don't display funding messages */
-    noFund: NPMInstallConfigItem;
-    /** Don't show update notifications */
-    noUpdateNotifier: NPMInstallConfigItem;
-    /** Allow scripts to run as root inside Docker */
-    unsafePerm: NPMInstallConfigItem;
-    /** Don't show progress bar */
-    noProgress: NPMInstallConfigItem;
-    /** Force reinstall of already installed packages */
-    force: NPMInstallConfigItem;
-    /** Use legacy peer dependency resolution */
-    legacyPeerDeps: NPMInstallConfigItem;
-    /** Prefer offline installation */
-    preferOffline: NPMInstallConfigItem;
-    /** Don't modify package.json or lock files */
-    noSave: NPMInstallConfigItem;
-    /** Don't execute package lifecycle scripts */
-    ignoreScripts: NPMInstallConfigItem;
+    flags: {
+        /** Omit optional dependencies */
+        omitOptional: NPMInstallConfigItem;
+        /** Omit dev dependencies */
+        omitDev: NPMInstallConfigItem;
+        /** Don't run security audits */
+        noAudit: NPMInstallConfigItem;
+        /** Don't display funding messages */
+        noFund: NPMInstallConfigItem;
+        /** Don't show update notifications */
+        noUpdateNotifier: NPMInstallConfigItem;
+        /** Allow scripts to run as root inside Docker */
+        unsafePerm: NPMInstallConfigItem;
+        /** Don't show progress bar */
+        noProgress: NPMInstallConfigItem;
+        /** Force reinstall of already installed packages */
+        force: NPMInstallConfigItem;
+        /** Use legacy peer dependency resolution */
+        legacyPeerDeps: NPMInstallConfigItem;
+        /** Prefer offline installation */
+        preferOffline: NPMInstallConfigItem;
+        /** Don't modify package.json or lock files */
+        noSave: NPMInstallConfigItem;
+        /** Don't execute package lifecycle scripts */
+        ignoreScripts: NPMInstallConfigItem;        
+    },
+    /** Run custom command(s) after NPM install */
+    postInstallRun: string[]
 }
