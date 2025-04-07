@@ -9,7 +9,7 @@ export interface SSHKeyCopyConfigs {
      * If the value is not a path, the SSH key is expected to be in
      * the default `.ssh` folder of the user.
      */
-    from: string;    
+    from: string;
     /**
      * Whether to install the SSH client on the image.
      * Default: `false`
@@ -68,6 +68,20 @@ export interface DockerfileCopyItem {
      * }
      */
     from?: string;
+    /**
+     * Specify the owner of the files being copied. in the
+     * format `<user>:<group>` or just `<user>`.
+     * @example 
+     * const options = {
+     *     owner: 'user:group' // user:group is the owner
+     * }
+     * @example
+     * // Setting the owner without a group.
+     * const options = {
+     *     owner: 'user' // user is the owner
+     }
+     */
+    owner?: string;
 }
 
 export interface DockerfileStageConfig {
@@ -203,7 +217,9 @@ export interface NPMInstallOptions {
         noSave?: boolean;
         /** Don't execute package lifecycle scripts */
         ignoreScripts?: boolean;
-    }
+    };
+    /** When `true`, installs packages globally */
+    global?: boolean;
     /** Run custom command(s) after NPM install */
     postInstallRun?: string | string[];
 }
@@ -240,7 +256,7 @@ export interface NPMInstallConfigs {
         /** Don't modify package.json or lock files */
         noSave: NPMInstallConfigItem;
         /** Don't execute package lifecycle scripts */
-        ignoreScripts: NPMInstallConfigItem;        
+        ignoreScripts: NPMInstallConfigItem;
     },
     /** Run custom command(s) after NPM install */
     postInstallRun: string[]

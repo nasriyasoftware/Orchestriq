@@ -7,6 +7,26 @@ import { exec } from 'child_process';
 
 class DockerfileBuilder {
     #_lines: string[] = [];
+    #_constants = Object.freeze({
+        npm: {
+            installFlags: () => {
+                return Object.freeze({
+                    omitOptional: Object.seal({ flag: `--omit=optional`, value: false }),
+                    omitDev: Object.seal({ flag: `--omit=dev`, value: true }),
+                    noAudit: Object.seal({ flag: '--no-audit', value: true }),
+                    noFund: Object.seal({ flag: '--no-fund', value: true }),
+                    noUpdateNotifier: Object.seal({ flag: '--no-update-notifier', value: true }),
+                    unsafePerm: Object.seal({ flag: '--unsafe-perm', value: false }),
+                    noProgress: Object.seal({ flag: '--no-progress', value: false }),
+                    force: Object.seal({ flag: '--force', value: false }),
+                    legacyPeerDeps: Object.seal({ flag: '--legacy-peer-deps', value: false }),
+                    preferOffline: Object.seal({ flag: '--prefer-offline', value: false }),
+                    noSave: Object.seal({ flag: '--no-save', value: false }),
+                    ignoreScripts: Object.seal({ flag: '--ignore-scripts', value: false }),
+                })
+            }
+        }
+    })
     #_cache = {
         cmd: { used: false },
         entrypoint: { used: false },
@@ -108,20 +128,7 @@ class DockerfileBuilder {
              * @since v1.0.5
              */
             dependencies: (options?: NPMInstallOptions): DockerfileBuilder => {
-                const flags = {
-                    omitOptional: { flag: `--omit=optional`, value: false },
-                    omitDev: { flag: `--omit=dev`, value: true },
-                    noAudit: { flag: '--no-audit', value: true },
-                    noFund: { flag: '--no-fund', value: true },
-                    noUpdateNotifier: { flag: '--no-update-notifier', value: true },
-                    unsafePerm: { flag: '--unsafe-perm', value: false },
-                    noProgress: { flag: '--no-progress', value: false },
-                    force: { flag: '--force', value: false },
-                    legacyPeerDeps: { flag: '--legacy-peer-deps', value: false },
-                    preferOffline: { flag: '--prefer-offline', value: false },
-                    noSave: { flag: '--no-save', value: false },
-                    ignoreScripts: { flag: '--ignore-scripts', value: false }
-                }
+                const flags = this.#_constants.npm.installFlags();
 
                 const cache = Object.seal({ cmd: '', runs: [] as string[] });
 
@@ -234,6 +241,74 @@ class DockerfileBuilder {
                 }
 
                 return this;
+            },
+            /**
+             * Installs the specified NPM packages within the Docker image.
+             * 
+             * This method allows the installation of one or more NPM packages, with options
+             * to install them globally and to customize the installation with specific flags.
+             * 
+             * @param names - A string or array of strings representing the package names 
+             *                to install. Packages can include specific versions by appending 
+             *                `@version` to the name. If no version is specified, it defaults 
+             *                to 'latest'.
+             * @param options - An object with optional properties:
+             *                  - `global` (boolean): If true, installs the packages globally.
+             *                  - `flags` (object): A set of boolean flags to modify the 
+             *                    installation process (e.g., `omitDev`, `noAudit`).
+             * @returns {DockerfileBuilder} The Dockerfile builder instance for chaining.
+             * @throws {TypeError} If any package name is not a string or is empty, or if 
+             *                     any provided flag has a non-boolean value.
+             * @throws {RangeError} If a package name is invalid (e.g., missing when scoped).
+             * @since v1.0.6
+             */
+            packages: (names: string | string[], options: Pick<NPMInstallOptions, 'global' | 'flags'>): DockerfileBuilder => {
+                const cache = {
+                    global: false,
+                    packages: [] as { name: string, version: string }[],
+                    flags: this.#_constants.npm.installFlags(),
+                    buildCommand() {
+                        const isGlobal = this.global ? '-g ' : '';
+                        const pkgs = this.packages.map(pkg => `${pkg.name}${pkg.version !== 'latest' ? `@${pkg.version}` : ''}`).join(' ');
+                        const flags = Object.entries(cache.flags).filter(flag => flag[1].value === true).map(flag => flag[1].flag).join(' ').trim();
+                        return `npm install ${isGlobal}${flags} ${pkgs}`.trim();
+                    }
+                }
+
+                if (!Array.isArray(names)) { names = [names]; }
+                const invalid = names.some(name => typeof name !== 'string' || name.trim().length === 0);
+                if (invalid) { throw new TypeError(`Unable to install packages. Expected string values.`) }
+
+                if (options && helpers.isObject(options)) {
+                    if (helpers.hasOwnProperty(options, 'global')) {
+                        if (typeof options.global !== 'boolean') { throw new TypeError(`Unable to install packages. Expected boolean value for the.`) }
+                        cache.global = true;
+                    }
+
+                    if (helpers.hasOwnProperty(options, 'flags') && options.flags) {
+                        const flagOptions = options.flags;
+                        for (const key in cache.flags) {
+                            if (key in flagOptions && helpers.hasOwnProperty(flagOptions, key)) {
+                                const value = flagOptions[key as keyof NPMInstallOptions['flags']];
+                                if (typeof value !== 'boolean') { throw new TypeError(`A NPM command was configured with a flag (${key}) with an incorrect value. Expected a boolean value but instead got ${typeof value}`) }
+                                cache.flags[key as keyof NPMInstallConfigs['flags']].value = value;
+                            }
+                        }
+                    }
+                }
+
+                for (const pkgName of names) {
+                    const isScoped = pkgName.startsWith('@');
+                    const [name, version] = isScoped ? pkgName.slice(1).split('@') : pkgName.split('@');
+                    if (name.length === 0) { throw new RangeError(`Unable to install (${pkgName}). Invalid package name`) }
+
+                    cache.packages.push({
+                        name: `${isScoped ? '@' : ''}${name}`,
+                        version: version ? (version.startsWith('v') ? version.slice(1) : version) : 'latest'
+                    });
+                }
+
+                return this.comment(`Installing ${cache.global ? `global ` : ''}packages: ${names.join(', ')}`).run(cache.buildCommand());
             }
         },
         remove: {
@@ -376,10 +451,15 @@ class DockerfileBuilder {
                 if (typeof item.from !== 'string') { throw new TypeError('Invalid file. Expected the "from" stage to be a string.'); }
                 if (!this.#_lines.find(line => line.endsWith(item.from as string))) { throw new Error(`The "from" stage "${item.from}" does not exist.`); }
             }
+
+            if (helpers.hasOwnProperty(item, 'owner')) {
+                if (typeof item.owner !== 'string') { throw new TypeError('Invalid file. Expected the "owner" to be a string.'); }
+                if (item.owner.trim().length === 0) { throw new RangeError('Invalid file. Expected the "owner" to be a non-empty string.'); }
+            }
         }
 
         this.comment('Copy files');
-        const content = copy.map(item => `COPY ${item.from ? `--from=${item.from} ` : ''}${item.src} ${item.dest}`).join('\n');
+        const content = copy.map(item => `COPY ${item.from ? `--from=${item.from} ` : ''}${item.owner ? `--chown=${item.owner} ` : ''}${item.src} ${item.dest}`).join('\n');
         return this.content(content).newLine();
     }
 
@@ -458,7 +538,6 @@ class DockerfileBuilder {
             const cmd: string[] = [
                 'DISTRO=$(cat /etc/os-release | grep ^ID= | cut -d= -f2) && \\',
                 `${tab}if [ "$DISTRO" = "alpine" ]; then \\`,
-                `${tab.repeat(2)}# Alpine-specific: Use addgroup and adduser for user/group management`
             ];
 
             if (cache.group.check) {
