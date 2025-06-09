@@ -128,17 +128,19 @@ class ContainersManager {
                     // Preparing the healthcheck
                     {
                         const healthcheck = service.healthcheck.toJSON();
-                        const obj = {
-                            test: healthcheck.test.length > 0 ? healthcheck.test : undefined,
-                            interval: healthcheck.interval,
-                            timeout: healthcheck.timeout,
-                            retries: healthcheck.retries,
-                            start_period: healthcheck.start_period,
-                            disable: healthcheck.disable,
-                        }
+                        if (healthcheck.test.length > 0) {
+                            const obj = {
+                                test: healthcheck.test,
+                                interval: healthcheck.interval,
+                                timeout: healthcheck.timeout,
+                                retries: healthcheck.retries,
+                                start_period: healthcheck.start_period,
+                                disable: healthcheck.disable,
+                            }
 
-                        if (Object.values(obj).some(value => value !== undefined)) {
-                            requestBody.Healthcheck = obj;
+                            if (Object.values(obj).some(value => value !== undefined)) {
+                                requestBody.Healthcheck = obj;
+                            }
                         }
                     }
 
@@ -185,7 +187,7 @@ class ContainersManager {
                     request.body = JSON.stringify(requestBody);
 
                     // The request to create the container
-                    const response = await this.#_socket.fetch(`containers/create${params.size > 0 ? `?${params.toString()}` : ''}`, { method: 'POST', body: JSON.stringify(container) });
+                    const response = await this.#_socket.fetch(`containers/create${params.size > 0 ? `?${params.toString()}` : ''}`, request);
                     const data = await response.json();
 
                     if (response.ok) {
@@ -200,13 +202,6 @@ class ContainersManager {
             } else {
                 // Check if the container is a an object and validate it
                 if (!helpers.isObject(container)) { throw new Error('The container must be an object.'); }
-
-
-                const request: Record<string, any> = {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    returnJSON: false,
-                }
 
                 if (helpers.hasOwnProperty(container, 'name')) {
                     if (typeof container.name !== 'string') { throw new Error('The container name must be a string.'); }
