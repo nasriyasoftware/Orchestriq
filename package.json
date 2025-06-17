@@ -1,6 +1,6 @@
 {
   "name": "@nasriya/orchestriq",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "A package to generate Docker files",
   "main": "./dist/cjs/main.js",
   "module": "./dist/esm/main.js",
@@ -38,11 +38,11 @@
     "test": "jest"
   },
   "author": "Nasriya Software",
-  "license": "Nasriya License",
+  "license": "SEE LICENSE IN LICENSE",
   "bugs": {
     "url": "https://github.com/nasriyasoftware/Orchestriq/issues"
   },
-  "homepage": "https://github.com/nasriyasoftware/Orchestriq#readme",
+  "homepage": "https://package.nasriya.net/Orchestriq",
   "funding": {
     "type": "individual",
     "url": "https://fund.nasriya.net/"
