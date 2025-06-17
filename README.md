@@ -1,7 +1,7 @@
 [![N|Solid](https://static.wixstatic.com/media/72ffe6_da8d2142d49c42b29c96ba80c8a91a6c~mv2.png)](https://nasriya.net)
 
 # Orchestriq.
-[![Static Badge](https://img.shields.io/badge/license-Free_(Restricted)-blue)](https://github.com/nasriyasoftware/Orchestriq?tab=License-1-ov-file) ![Repository Size](https://img.shields.io/github/repo-size/nasriyasoftware/Orchestriq.svg) ![Last Commit](https://img.shields.io/github/last-commit/nasriyasoftware/Orchestriq.svg) [![Status](https://img.shields.io/badge/Status-Stable-green.svg)](link-to-your-status-page)
+[![Static Badge](https://img.shields.io/badge/license-NPCL-blue)](https://github.com/nasriyasoftware/Orchestriq?tab=License-1-ov-file) ![Repository Size](https://img.shields.io/github/repo-size/nasriyasoftware/Orchestriq.svg) ![Last Commit](https://img.shields.io/github/last-commit/nasriyasoftware/Orchestriq.svg) [![Status](https://img.shields.io/badge/Status-Stable-green.svg)](link-to-your-status-page)
 
 ##### Visit us at [www.nasriya.net](https://nasriya.net).
 
@@ -75,4 +75,5 @@ Wanna learn more? [Checkout our Wiki](https://github.com/nasriyasoftware/Orchest
 
 ___
 ## License
+This software is licensed under the **Nasriya Personal & Commercial License (NPCL)**, version 1.0.
 Please read the license from [here](https://github.com/nasriyasoftware/Orchestriq?tab=License-1-ov-file).
