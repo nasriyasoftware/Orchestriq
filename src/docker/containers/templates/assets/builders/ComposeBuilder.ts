@@ -607,7 +607,8 @@ class ComposeBuilder {
                 this.#_write(`networks:`).#_incIndent();
                 for (const network of networks) {
                     this.#_write(`${network.name}:`).#_incIndent();
-
+                    this.#_write(`name: ${network.name}`);
+                    
                     if (network.external) {
                         this.#_write(`external: ${network.external}`);
                     } else {
