@@ -29,7 +29,7 @@ class Service {
     #_dependsOn: string[] = [];
 
     #_networks: string[] = [];
-    #_network_mode: NetworkMode = 'bridge';
+    #_network_mode: NetworkMode | undefined = 'bridge';
     #_user = undefined as string | undefined;
     #_restart: FailureRestartOption | RestartOption | RestartPolicy = 'unless-stopped';
 
@@ -160,9 +160,9 @@ class Service {
      * If the mode is an object with `type` and `value` properties, the value of `type` must be either 'container' or 'service',
      * and the value of `value` must be a non-empty string.
      * If the mode is a string, it must be one of 'bridge', 'host', or 'none'.
-     * @returns {NetworkMode} The network mode for the service.
+     * @returns {NetworkMode | undefined} The network mode for the service.
      */
-    get network_mode(): NetworkMode { return this.#_network_mode }
+    get network_mode(): NetworkMode | undefined { return this.#_network_mode }
 
     /**
      * Sets the path to a file containing environment variables in the format
@@ -1085,6 +1085,7 @@ class Service {
             }
 
             this.#_networks.push(...networks);
+            this.#_network_mode = undefined;
         },
         /**
          * Adds external links to the service.

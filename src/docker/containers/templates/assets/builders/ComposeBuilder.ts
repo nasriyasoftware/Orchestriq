@@ -256,20 +256,18 @@ class ComposeBuilder {
                         }
                     }
 
-                    if (service.network_mode) {
-                        const mode = (service.network_mode as string).includes(':') ? `"${service.network_mode}"` : service.network_mode;
-                        this.#_write(`network_mode: ${mode}`);
-                    }
+                    if (service.networks && service.networks.length > 0) {
+                        this.#_write(`networks:`).#_incIndent();
 
-                    if (service.networks) {
-                        if (service.networks.length > 0) {
-                            this.#_write(`networks:`).#_incIndent();
+                        for (const network of service.networks) {
+                            this.#_write(`- ${network}`);
+                        }
 
-                            for (const network of service.networks) {
-                                this.#_write(`- ${network}`);
-                            }
-
-                            this.#_decIndent();
+                        this.#_decIndent();
+                    } else {
+                        if (service.network_mode) {
+                            const mode = (service.network_mode as string).includes(':') ? `"${service.network_mode}"` : service.network_mode;
+                            this.#_write(`network_mode: ${mode}`);
                         }
                     }
 
@@ -608,7 +606,7 @@ class ComposeBuilder {
                 for (const network of networks) {
                     this.#_write(`${network.name}:`).#_incIndent();
                     this.#_write(`name: ${network.name}`);
-                    
+
                     if (network.external) {
                         this.#_write(`external: ${network.external}`);
                     } else {

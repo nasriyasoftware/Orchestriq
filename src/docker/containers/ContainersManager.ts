@@ -186,6 +186,28 @@ class ContainersManager {
                         }
                     }
 
+                    // Prepare the network
+                    {
+                        if (service.networks && service.networks.length > 0) {
+                            // Use the first network as the primary one
+                            requestBody.HostConfig = requestBody.HostConfig || {};
+                            requestBody.HostConfig.NetworkMode = service.networks[0];
+
+                            requestBody.NetworkingConfig = {
+                                EndpointsConfig: {}
+                            };
+
+                            for (const network of service.networks) {
+                                requestBody.NetworkingConfig.EndpointsConfig[network] = {
+                                    Aliases: [service.name] // or other custom values
+                                };
+                            }
+                        } else {
+                            requestBody.HostConfig = requestBody.HostConfig || {};
+                            requestBody.HostConfig.NetworkMode = service.network_mode;
+                        }
+                    }
+
                     // Preparing the request
                     const containerName = service.container_name || service.name;
                     params.set('name', containerName);
