@@ -171,7 +171,7 @@ class ComposeBuilder {
 
                             for (const port of externalPorts) {
                                 if (port.internalOnly || !port.external) {
-                                    this.#_write(`- ${port.internal}`);
+                                    this.#_write(`- ${port.internal}:${port.internal}`);
                                 } else {
                                     this.#_write(`- ${port.external}:${port.internal}`);
                                 }

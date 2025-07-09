@@ -30,7 +30,7 @@ class Service {
 
     #_networks: string[] = [];
     #_network_mode: NetworkMode = 'bridge';
-    #_user = 'node';
+    #_user = undefined as string | undefined;
     #_restart: FailureRestartOption | RestartOption | RestartPolicy = 'unless-stopped';
 
     #_logging: DockerLoggingDriver = {
@@ -1258,7 +1258,7 @@ class Service {
      * Gets the user under which the service runs.
      * @returns {string} The user name for the service.
      */
-    get user(): string { return this.#_user; }
+    get user(): string | undefined { return this.#_user; }
 
     /**
      * Gets the restart policy for the service.
