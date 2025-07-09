@@ -181,9 +181,7 @@ class ContainersManager {
                             for (const port of service.ports) {
                                 const containerPort = `${port.internal}/tcp`;
                                 requestBody.ExposedPorts[containerPort] = {};
-                                if (port.external) {
-                                    requestBody.HostConfig.PortBindings[containerPort] = [{ HostPort: `${port.external}` }];
-                                }
+                                requestBody.HostConfig.PortBindings[containerPort] = [{ HostPort: `${port.external || port.internal}` }];
                             }
                         }
                     }
