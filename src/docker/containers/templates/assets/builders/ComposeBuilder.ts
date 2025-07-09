@@ -152,6 +152,10 @@ class ComposeBuilder {
                         this.#_decIndent();
                     }
 
+                    if (service.userns_mode && service.userns_mode !== 'default') {
+                        this.#_write(`userns_mode: ${service.userns_mode}`);
+                    }
+
                     if (service.ports.length > 0) {
                         const internalPorts = service.ports.filter(port => port.internalOnly === true);
                         const externalPorts = service.ports.filter(port => port.internalOnly !== true);

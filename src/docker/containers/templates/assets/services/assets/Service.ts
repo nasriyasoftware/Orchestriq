@@ -1,4 +1,4 @@
-import { Port, ServiceVolume, FailureRestartOption, RestartOption, DockerLoggingDriver, ExternalLinkRecord, ServiceConfigsData, ServiceCreationOptions, RestartPolicy, DockerDriverType, NetworkMode, ServiceVolumeConfig } from './docs';
+import { Port, ServiceVolume, FailureRestartOption, RestartOption, DockerLoggingDriver, ExternalLinkRecord, ServiceConfigsData, ServiceCreationOptions, RestartPolicy, DockerDriverType, NetworkMode, ServiceVolumeConfig, UsernsMode } from './docs';
 import ContainerTemplate from '../../../ContainerTemplate';
 import ServiceBuild from './ServiceBuild';
 import Environment from '../../Environment';
@@ -32,6 +32,7 @@ class Service {
     #_network_mode: NetworkMode | undefined = 'bridge';
     #_user = undefined as string | undefined;
     #_restart: FailureRestartOption | RestartOption | RestartPolicy = 'unless-stopped';
+    #_userns_mode: UsernsMode | undefined = undefined;
 
     #_logging: DockerLoggingDriver = {
         driver: 'json-file',
@@ -93,6 +94,7 @@ class Service {
         if (options.volumes) { this.add.volumes(options.volumes); }
         if (options.description) { this.description = options.description; }
         if (options.context) { this.build.context = options.context; }
+        if (options.userns_mode) { this.userns_mode = options.userns_mode; }
         if (options.build) {
             if (options.build.context) { this.build.context = options.build.context; }
             if (options.build.dockerfile) { this.build.dockerfile = options.build.dockerfile; }
@@ -128,6 +130,26 @@ class Service {
     // #########################################################################
     // #########################################################################
     // #########################################################################
+
+    /**
+     * Sets the user namespace mode for the service.
+     * 
+     * @param {UsernsMode} userns_mode - The user namespace mode to set. 
+     * It must be one of the following values: "host", "private", "default",
+     * or "container:<container_name>".
+     * 
+     * @throws {TypeError} Throws a TypeError if the provided userns_mode is not a string,
+     * or if it does not match one of the valid modes.
+     * @since v1.0.9
+     */
+    set userns_mode(userns_mode: UsernsMode) {
+        if (typeof userns_mode !== 'string') { throw new TypeError('Userns mode must be a string.'); }
+        if (!['host', 'private', 'default'].includes(userns_mode) && !userns_mode.startsWith('container:')) {
+            throw new TypeError('Userns mode must be one of "host", "private", "default", or "container:<container_name>".');
+        }
+
+        this.#_userns_mode = userns_mode;
+    }
 
     /**
      * Sets the network mode for the service.
@@ -1024,7 +1046,6 @@ class Service {
                     if (typeof volume.hostPath !== 'string') { throw new TypeError('Volume hostPath (when defined) must be a string.'); }
                     if (volume.hostPath.length === 0) { throw new SyntaxError('Volume hostPath cannot be empty.'); }
                     if (!PATH_REGEX.test(volume.hostPath)) { throw new SyntaxError('Volume hostPath must be a valid path.'); }
-                    if (!fs.existsSync(volume.hostPath)) { throw new Error(`Volume hostPath '${volume.hostPath}' does not exist.`); }
                     volumes.push({ type: 'bind', containerPath: volume.containerPath, hostPath: volume.hostPath, read_only: volume.read_only });
                     continue;
                 }
@@ -1145,6 +1166,14 @@ class Service {
     // #########################################################################
     // #########################################################################
     // #########################################################################
+
+    /**
+     * Retrieves the user namespace mode for the service.
+     * This mode determines the user namespace isolation applied to the service.
+     *
+     * @returns {UsernsMode | undefined} The user namespace mode as a UsernsMode type, or undefined if not set.
+     */
+    get userns_mode(): UsernsMode | undefined { return this.#_userns_mode }
 
     /**
      * Retrieves the container name for the service.

@@ -42,7 +42,7 @@ export type AnonymousVolume = Pick<BaseServiceVolume, 'containerPath' | 'read_on
 export type NamedVolume = Pick<BaseServiceVolume, 'name' | 'containerPath' | 'read_only'>;
 export type BindVolume = Pick<BaseServiceVolume, 'hostPath' | 'containerPath' | 'read_only'>;
 export type ServiceVolume = AnonymousVolume | NamedVolume | BindVolume;
-export type ServiceVolumeConfig = (AnonymousVolume & { type: 'anonymous'}) | (NamedVolume & { type: 'named' }) | (BindVolume & { type: 'bind' });
+export type ServiceVolumeConfig = (AnonymousVolume & { type: 'anonymous' }) | (NamedVolume & { type: 'named' }) | (BindVolume & { type: 'bind' });
 
 export type DockerLoggingDriver = {
     driver: 'json-file';
@@ -194,7 +194,7 @@ export interface FailureRestartOption extends RestartOption {
 export type RestartPolicy = 'on-failure' | 'unless-stopped' | 'always' | 'no';
 export type DockerDriverType = DockerLoggingDriver['driver'];
 export type NetworkMode = 'host' | 'bridge' | 'none' | { type: 'container' | 'service', value: string } | string;
-
+export type UsernsMode = 'host' | 'private' | 'default' | `container:${string}`;
 export interface ServiceCreationOptions {
     /**The name of the service */
     name: string;
@@ -216,6 +216,7 @@ export interface ServiceCreationOptions {
     environment?: Record<string, string>;
     /**The environment files/directories for the service */
     env_files?: string | string[];
+    userns_mode?: UsernsMode;
     entrypoint?: string;
     command?: string[];
     dependsOn?: string[];

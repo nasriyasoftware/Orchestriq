@@ -73,6 +73,11 @@ class ContainersManager {
                         Image: service.image,
                     }
 
+                    if (service.userns_mode && service.userns_mode !== 'default') {
+                        requestBody.HostConfig = requestBody.HostConfig || {};
+                        requestBody.HostConfig.UsernsMode = service.userns_mode;
+                    }
+                    
                     if (service.user) { requestBody.User = service.user; }
                     if (service.command) { requestBody.Cmd = service.command; }
                     if (service.entrypoint) { requestBody.Entrypoint = service.entrypoint; }
