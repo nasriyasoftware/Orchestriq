@@ -7,7 +7,7 @@ import fs from "fs";
 import helpers from "../../utils/helpers";
 import { Readable } from "stream";
 import tarball from "../../utils/Tarball";
-import { BindVolume, NamedVolume } from "./templates/assets/services/assets/docs";
+import { BindVolume, FailureRestartOption, NamedVolume, RestartPolicy } from "./templates/assets/services/assets/docs";
 
 class ContainersManager {
     #_containers: ContainerTemplate[] = [];
@@ -77,7 +77,7 @@ class ContainersManager {
                         requestBody.HostConfig = requestBody.HostConfig || {};
                         requestBody.HostConfig.UsernsMode = service.userns_mode;
                     }
-                    
+
                     if (service.user) { requestBody.User = service.user; }
                     if (service.command) { requestBody.Cmd = service.command; }
                     if (service.entrypoint) { requestBody.Entrypoint = service.entrypoint; }
@@ -211,6 +211,29 @@ class ContainersManager {
                             requestBody.HostConfig = requestBody.HostConfig || {};
                             requestBody.HostConfig.NetworkMode = service.network_mode;
                         }
+                    }
+
+                    // Prepare the restart policy
+                    {
+                        requestBody.HostConfig = requestBody.HostConfig || {};
+                        const restart = service.restart;
+                        const restartPolicy: {
+                            Name: RestartPolicy;
+                            MaximumRetryCount?: number
+                        } = {
+                            Name: 'unless-stopped' // default
+                        };
+
+                        if (typeof restart === 'string') {
+                            restartPolicy.Name = restart;
+                        } else if (typeof restart === 'object' && restart !== null) {
+                            restartPolicy.Name = restart.policy as RestartPolicy;
+                            if (restart.policy === 'on-failure') {
+                                restartPolicy.MaximumRetryCount = (restart as FailureRestartOption).times ?? 5;
+                            }
+                        }
+
+                        requestBody.HostConfig.RestartPolicy = restartPolicy;
                     }
 
                     // Preparing the request
